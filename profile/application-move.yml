@@ -1,0 +1,5 @@
+mail:
+  path:
+    origin-dir-mdata: D:\data\mindex\opt\TerraceTims\mdata
+    new-dir-mdata: D:\data\mindex\opt\TerraceTims\new_mdata
+

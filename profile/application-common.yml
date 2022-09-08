@@ -1,0 +1,3 @@
+report:
+  report_path: D:\data\report
+  local_test_data_path: D:\data\mindex # windows 일 경우에만 동작한다.
