@@ -17,6 +17,12 @@ class DatabaseSettings:
     database: str = property["database"]
 
 
+class MailMoveSettings:
+    property = get_property()["mail"]["path"]
+    origin_dir_mdata: str = property["origin-dir-mdata"]
+    new_dir_mdata: str = property["new-dir-mdata"]
+
+
 class DateRangeSettings:
     property = get_property()["date_range"]
     start_day: datetime.datetime = property["start_day"]
@@ -41,6 +47,7 @@ class ApplicationSettings(BaseSettings):
     date_range: DateRangeSettings = DateRangeSettings()
     db: DatabaseSettings = DatabaseSettings()
     report: ReportSettings = ReportSettings()
+    move_setting: MailMoveSettings = MailMoveSettings()
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

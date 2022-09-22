@@ -43,10 +43,10 @@ class Company:
     company_mail_count: int                  # B : 회사의 총 메일 개수 (C+D)
     company_hardlink_mail_count: int         # C : 회사의 하드 링크가 있는 메일 개수
     company_non_link_mail_count: int         # D : 회사의 하드 링크가 없는 메일 개수
-    company_hardlink_mail_unique_count: int  # E : 회사의 하드 링크가 있는 메일 중 중복 되는것을 재외한 개수
+    company_hardlink_mail_unique_count: int  # E : 회사의 하드 링크가 있는 메일 중 중복 되는것을 제외한 개수
     company_hardlink_mail_size: int          # F : 회사의 하드 링크가 있는 메일의 중복을 포함한 용량
     company_non_link_mail_size: int          # G : 회사의 하드 링크가 없는 메일의 용량
-    company_hardlink_mail_unique_size: int   # H : 회사의 하드 링크가 있는 메일의 중복을 재외한 용량
+    company_hardlink_mail_unique_size: int   # H : 회사의 하드 링크가 있는 메일의 중복을 제외한 용량
     users: List[User]
 
 

@@ -1,6 +1,5 @@
 import logging
 import os
-import platform
 from typing import List, Dict
 
 from models.company_models import Company, save_company_as_json
@@ -78,10 +77,13 @@ class PostgresqlSqlScanner:
         existing_users: List[User] = []
         for user in company.users:
             mindex_path = self.__make_mindex_path(user)
-            if os.path.exists(mindex_path) is False:
-                continue
+            # if os.path.exists(mindex_path) is False:
+            #     continue -> 함수안에서 파일 존재 여부 체크 처리
             # step1 : sqlite DB에서 사용자 메일 수 뽑아올린다.
-            sqlite = SqliteConnector(mindex_path)
+            try:
+                sqlite = SqliteConnector(mindex_path, company.id, user.id, company.name)
+            except FileNotFoundError as e:
+                continue
             user.user_mail_count, user.user_mail_size = sqlite.get_target_mail_count(days)
             company.company_mail_count += user.user_mail_count
             company.company_mail_size_in_db += user.user_mail_size

@@ -1,6 +1,7 @@
 import logging
+import os
 import sqlite3
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 from models.day_models import Days
 from models.mail_models import MailMessage
@@ -10,12 +11,44 @@ log = logging.getLogger(__name__)
 
 
 class SqliteConnector:
+    db_path: str
+    readonly: bool
+    company_id: int
+    user_id: int
+    company_name: str
     setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
+    mail_checker = ApplicationContainer().mail_file_checker()
 
-    def __init__(self, db_path: str) -> None:
-        self.conn = None
+    def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, readonly: bool = True) -> None:
         super().__init__()
-        self.conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
+        self.conn = None
+        self.readonly = readonly
+        self.company_id = company_id
+        self.user_id = user_id
+        self.company_name = company_name
+        self.db_path = db_path
+        if os.path.exists(self.db_path) is False:
+            log.error("Not found sqlite db : %s" % self.__make_log_identify())
+            raise FileNotFoundError
+        if readonly is True:
+            self.conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
+        else:
+            self.conn = sqlite3.connect('file:%s' % db_path, uri=True)
+
+    def __check_eml_data(self, full_path: str) -> (float, int, int):
+        stat: os.stat_result = self.mail_checker.check_file_status(full_path)
+        return stat.st_ctime, stat.st_ino, stat.st_size
+
+    def __make_log_identify(self, folder_no: int = -1, uid_no: int = -1, message: str = ""):
+        log_identify = "company_id=%d(%s), user_id=%d, readonly=%s" % (
+        self.company_id, self.company_name, self.user_id, self.readonly)
+        if folder_no != -1:
+            log_identify += " folder_no=%d" % folder_no
+        if uid_no != -1:
+            log_identify += " uid_no=%d" % uid_no
+        if len(message) > 0:
+            log_identify += " : %s" % message
+        return log_identify
 
     def __del__(self):
         self.disconnect()
@@ -30,7 +63,7 @@ class SqliteConnector:
         e_timestamp = days.get_end_day_timestamp()
         if e_timestamp is None:
             return ""
-        sub_query = " where msg_receive < % s" % e_timestamp
+        sub_query = " where msg_receive < %s" % e_timestamp
         if s_timestamp is not None:
             sub_query += " and msg_receive > %s" % s_timestamp
         return sub_query
@@ -48,6 +81,52 @@ class SqliteConnector:
         if size is None and count == 0:
             size = 0
         return count, size
+
+    def __get_mail_file_name_in_db(self, folder_no: int, uid_no: int) -> Union[str, None]:
+        full_path = None
+        cur = self.conn.cursor()
+        cur.execute(
+            "select full_path from mail_message where folder_no = %d and uid_no = %d" % (folder_no, uid_no))
+        for idx, row in enumerate(cur):
+            full_path = row[0]
+            if idx != 0:
+                log.error("__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                                 uid_no=uid_no))
+        return full_path
+
+    def __validate_eml_path(self, new_full_path, old_full_path, folder_no: int, uid_no: int):
+        if new_full_path == old_full_path:
+            log.error(
+                "Error. old file and new file is same : %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                       uid_no=uid_no,
+                                                                                       message=new_full_path, ))
+            return False
+        if os.path.exists(new_full_path) is False:
+            log.error("Error. Not found new mail path : %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                       uid_no=uid_no,
+                                                                                       message=new_full_path, ))
+            return False
+        eml_file_name = new_full_path.split("/")[-1]
+        if eml_file_name not in old_full_path:
+            return False
+        old_ctime, old_ino, old_size = self.__check_eml_data(new_full_path)
+        new_ctime, new_ino, new_size = self.__check_eml_data(old_full_path)
+        if old_size != new_size or old_size == 0:
+            log.error("Error. not compare mail size old and now : %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                                 uid_no=uid_no,
+                                                                                                 message=new_full_path,
+                                                                                                 ))
+            return False
+        return True
+
+    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str) -> bool:
+        old_full_path = self.__get_mail_file_name_in_db(folder_no, uid_no)
+        if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
+            return False
+        cur = self.conn.cursor()
+        cur.execute("update mail_message set full_path = %s from mail_message where folder_no = %d uid_no = %d" % (
+            new_full_path, folder_no, uid_no))
+        return True
 
     def get_target_mail_list(self, days: Days) -> List[MailMessage]:
         cur = self.conn.cursor()
