@@ -2,7 +2,7 @@ import logging
 import os
 import platform
 import shutil
-from typing import List, Union
+from typing import Union
 
 from models.company_models import Company, load_company_from_json
 from models.mail_models import MailMessage
