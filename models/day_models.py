@@ -4,7 +4,8 @@ from dataclasses_json import dataclass_json, config
 from dataclasses import dataclass, field
 
 from marshmallow import fields
-
+from backports.datetime_fromisoformat import MonkeyPatch
+MonkeyPatch.patch_fromisoformat()
 
 @dataclass_json
 @dataclass
