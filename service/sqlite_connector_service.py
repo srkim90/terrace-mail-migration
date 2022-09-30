@@ -30,10 +30,13 @@ class SqliteConnector:
         if os.path.exists(self.db_path) is False:
             log.error("Not found sqlite db : %s" % self.__make_log_identify())
             raise FileNotFoundError
-        if readonly is True:
-            self.conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
-        else:
-            self.conn = sqlite3.connect('file:%s' % db_path, uri=True)
+        try:
+            if readonly is True:
+                self.conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
+            else:
+                self.conn = sqlite3.connect('file:%s' % db_path, uri=True)
+        except sqlite3.NotSupportedError as e:
+            self.conn = sqlite3.connect('%s' % db_path)
 
     def __check_eml_data(self, full_path: str) -> (float, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(full_path)
