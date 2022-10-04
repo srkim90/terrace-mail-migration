@@ -1,5 +1,9 @@
 import logging
 
+import sys
+
+sys.path.append("./binary/Python-3.6.15-minimum/local/lib/python3.6/site-packages")
+
 from service.pgsql_scaner_service import PostgresqlSqlScanner
 from service.property_provider_service import ApplicationSettings, ApplicationContainer
 
