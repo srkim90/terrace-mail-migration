@@ -5,9 +5,8 @@ from typing import Tuple, List, Union
 
 from models.day_models import Days
 from models.mail_models import MailMessage
+from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, ApplicationContainer
-
-log = logging.getLogger(__name__)
 
 
 class SqliteConnector:
@@ -18,6 +17,7 @@ class SqliteConnector:
     company_name: str
     setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
     mail_checker = ApplicationContainer().mail_file_checker()
+    logger: LoggingService = ApplicationContainer().logger()
 
     def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, readonly: bool = True) -> None:
         super().__init__()
@@ -28,7 +28,7 @@ class SqliteConnector:
         self.company_name = company_name
         self.db_path = db_path
         if os.path.exists(self.db_path) is False:
-            log.error("Not found sqlite db : %s" % self.__make_log_identify())
+            self.logger.minor("Not found sqlite db : path=%s info=(%s)" % (self.db_path, self.__make_log_identify()))
             raise FileNotFoundError
         try:
             if readonly is True:
@@ -93,19 +93,19 @@ class SqliteConnector:
         for idx, row in enumerate(cur):
             full_path = row[0]
             if idx != 0:
-                log.error("__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
+                self.logger.error("__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
                                                                                                  uid_no=uid_no))
         return full_path
 
     def __validate_eml_path(self, new_full_path, old_full_path, folder_no: int, uid_no: int):
         if new_full_path == old_full_path:
-            log.error(
+            self.logger.error(
                 "Error. old file and new file is same : %s" % self.__make_log_identify(folder_no=folder_no,
                                                                                        uid_no=uid_no,
                                                                                        message=new_full_path, ))
             return False
         if os.path.exists(new_full_path) is False:
-            log.error("Error. Not found new mail path : %s" % self.__make_log_identify(folder_no=folder_no,
+            self.logger.error("Error. Not found new mail path : %s" % self.__make_log_identify(folder_no=folder_no,
                                                                                        uid_no=uid_no,
                                                                                        message=new_full_path, ))
             return False
@@ -115,7 +115,7 @@ class SqliteConnector:
         old_ctime, old_ino, old_size = self.__check_eml_data(new_full_path)
         new_ctime, new_ino, new_size = self.__check_eml_data(old_full_path)
         if old_size != new_size or old_size == 0:
-            log.error("Error. not compare mail size old and now : %s" % self.__make_log_identify(folder_no=folder_no,
+            self.logger.error("Error. not compare mail size old and now : %s" % self.__make_log_identify(folder_no=folder_no,
                                                                                                  uid_no=uid_no,
                                                                                                  message=new_full_path,
                                                                                                  ))

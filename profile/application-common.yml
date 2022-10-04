@@ -1,3 +1,9 @@
 report:
-  report_path: /home/mailadm/data
+  report_path: D:\data\report
   local_test_data_path: D:\data\mindex # windows 일 경우에만 동작한다.
+logging:
+  log_path: D:\data\log
+  file_log_level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  stdout_log_level: INFO # DEBUG, MINOR, INFO, ERROR
+  max_logfile_size: 64 # MB
+  max_logfile_count: 10

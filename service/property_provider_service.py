@@ -4,6 +4,7 @@ from pydantic import BaseSettings
 from dependency_injector import containers, providers
 
 from models.day_models import Days
+from service.logging_service import LoggingService
 from service.mail_file_checker_service import MailMessageFileChecker
 from utils.utills import get_property
 
@@ -21,6 +22,8 @@ class MailMoveSettings:
     property = get_property()["mail"]["path"]
     origin_dir_mdata: str = property["origin-dir-mdata"]
     new_dir_mdata: str = property["new-dir-mdata"]
+
+
 
 
 class DateRangeSettings:
@@ -53,3 +56,4 @@ class ApplicationSettings(BaseSettings):
 class ApplicationContainer(containers.DeclarativeContainer):
     setting_provider = providers.Singleton(ApplicationSettings)
     mail_file_checker = providers.Singleton(MailMessageFileChecker)
+    logger: LoggingService = providers.Singleton(LoggingService)
