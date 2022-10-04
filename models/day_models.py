@@ -4,7 +4,10 @@ from dataclasses_json import dataclass_json, config
 from dataclasses import dataclass, field
 
 from marshmallow import fields
-from backports.datetime_fromisoformat import MonkeyPatch
+try:
+    from backports.datetime_fromisoformat import MonkeyPatch
+except ModuleNotFoundError as e:
+    pass
 MonkeyPatch.patch_fromisoformat()
 
 @dataclass_json
