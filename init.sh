@@ -1,6 +1,15 @@
 #!/bin/bash
 
-PYTHON_VER=3.6.15
+CENTOS_VER=`cat /etc/redhat-release  | awk -F 'release' '{print $2}' | tr -d ' ' | cut -d '.' -f 1`
+if [ ${CENTOS_VER} == 6 ]; then
+    PYTHON_VER=3.6.15
+elif [ ${CENTOS_VER} == 7 ]; then
+    PYTHON_VER=3.6.15
+else
+    echo "Error. Invalid CensOS version!!"
+    echo "only support CentOS 6 or 7"
+    exit
+fi
 BASE_PYTHON_DIR=./binary
 PYTHON_TAR_FILE_NAME=Python-${PYTHON_VER}-minimum.tar.gz
 PYTHON_TAR_FILE_PATH=${BASE_PYTHON_DIR}/${PYTHON_TAR_FILE_NAME}
@@ -25,6 +34,7 @@ if [ ! -e $PYTHON_BIN ]; then
     echo "Python-${PYTHON_VER} does not exist. Install"
     cd ${BASE_PYTHON_DIR}
     tar -zxf $PYTHON_TAR_FILE_NAME
+    ln -s Python-${PYTHON_VER}-minimum Python-minimum
     cd ..
     size=`du ${PYTHON_PATH} --max-depth=0 -h | awk '{print $1}'`
     echo "Install complete : size=${size}"
