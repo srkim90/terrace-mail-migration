@@ -1,9 +1,10 @@
 #!/bin/bash
 
+PYTHON_VER=3.6.15
 BASE_PYTHON_DIR=./binary
-PYTHON_TAR_FILE_NAME=Python-3.9.14-minimum.tar.gz
+PYTHON_TAR_FILE_NAME=Python-${PYTHON_VER}-minimum.tar.gz
 PYTHON_TAR_FILE_PATH=${BASE_PYTHON_DIR}/${PYTHON_TAR_FILE_NAME}
-PYTHON_PATH=${BASE_PYTHON_DIR}/Python-3.9.14-minimum
+PYTHON_PATH=${BASE_PYTHON_DIR}/Python-${PYTHON_VER}-minimum
 PYTHON_BIN=${PYTHON_PATH}/python
 
 if [ ! -d $BASE_PYTHON_DIR ]; then
@@ -21,7 +22,7 @@ if [ ! -e $PYTHON_TAR_FILE_PATH ]; then
 fi
 
 if [ ! -e $PYTHON_BIN ]; then
-    echo "Python 3.9 does not exist. Install"
+    echo "Python-${PYTHON_VER} does not exist. Install"
     cd ${BASE_PYTHON_DIR}
     tar -zxf $PYTHON_TAR_FILE_NAME
     cd ..
