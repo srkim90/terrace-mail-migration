@@ -133,6 +133,22 @@ class PostgresqlSqlScanner:
                     company.company_non_link_mail_size += mail.st_size
         return company
 
+    def get_companies_count(self, company_id: int = -1):
+        where = ""
+        if company_id >= 0:
+            where = " where id = %d" % (company_id,)
+        query = "select count(*) from go_companies" + where
+        for row in self.__execute_query(query):
+            return row[0]
+
+    def get_users_count(self, company_id: int = -1):
+        where = ""
+        if company_id >= 0:
+            where = " where id = %d" % (company_id,)
+        query = "select count(*) from go_companies" + where
+        for row in self.__execute_query(query):
+            return row[0]
+
     def report_user_and_company(self, days: Days, company_id: int = -1):
         for company in self.find_company(days, company_id):
             company = self.__add_mail_count_info(company, days)
