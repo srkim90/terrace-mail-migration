@@ -6,9 +6,10 @@ from dataclasses import dataclass, field
 from marshmallow import fields
 try:
     from backports.datetime_fromisoformat import MonkeyPatch
-except ModuleNotFoundError as e:
+    MonkeyPatch.patch_fromisoformat()
+except ModuleNotFoundError or NameError as e:
     pass
-MonkeyPatch.patch_fromisoformat()
+
 
 @dataclass_json
 @dataclass
