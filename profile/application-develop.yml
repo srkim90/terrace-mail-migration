@@ -1,3 +1,5 @@
+system:
+  max-work-threads: 8
 report:
   report-path: D:\data\report
   local-test-data-path: D:\data\mindex # windows 일 경우에만 동작한다.

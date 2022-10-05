@@ -20,6 +20,10 @@ class DatabaseSettings:
     database: str = property["database"]
 
 
+class SystemSettings:
+    max_work_threads: int = get_property()["system"]["max-work-threads"]
+
+
 class MailMoveSettings:
     property = get_property()["mail"]["path"]
     origin_mdata_path: List[str] = parser_dir_list(property["origin-mdata-path"])
@@ -54,6 +58,7 @@ class ApplicationSettings(BaseSettings):
     db: DatabaseSettings = DatabaseSettings()
     report: ReportSettings = ReportSettings()
     move_setting: MailMoveSettings = MailMoveSettings()
+    system: SystemSettings = SystemSettings()
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

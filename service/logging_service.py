@@ -133,13 +133,16 @@ class LoggingBase:
         ptr_log_message = "[%s] %s%-5s%s : %s" % (
             timestamp, Colors.debug_color(level).value, level.name, Colors.CEND.value, log_message)
         if self.settings.stdout_log_level.value <= level.value:
+            lock.acquire()
             print(ptr_log_message)
+            lock.release()
         if self.settings.file_log_level.value <= level.value:
+            lock.acquire()
             f_name = self.__make_log_file_name()
             if f_name is not None:
                 with open(f_name, "ab") as fd:
                     fd.write(new_log_message.encode("utf-8") + b"\n")
-
+            lock.release()
 
 logger = LoggingBase()
 

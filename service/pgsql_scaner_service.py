@@ -1,8 +1,9 @@
 import datetime
 import logging
 import os
+import threading
 import time
-from typing import List, Dict
+from typing import List, Dict, Union, Set, Tuple
 
 from models.company_models import Company, save_company_as_json
 from models.company_scan_statistic_models import ScanStatistic, update_statistic
@@ -28,6 +29,8 @@ class PostgresqlSqlScanner:
         self.logger.info("PostgresqlScanner start up")
         self.pg_conn = None
         self.is_windows = is_windows()
+        self.work_queue: Union[List[Tuple[Company, int]], None] = None
+        self.lock = threading.Semaphore(1)
 
     def __pg_disconnect(self) -> None:
         if self.pg_conn is None:
@@ -195,6 +198,65 @@ class PostgresqlSqlScanner:
         for row in self.__execute_query(query):
             return row[0]
 
+    def __wait_for_processing(self):
+        while True:
+            time.sleep(0.5)
+            self.lock.acquire()
+            if len(self.work_queue) == 0:
+                self.work_queue = None
+                self.lock.release()
+                return
+            self.lock.release()
+
+    def __enqueue(self, company: Company, idx: int):
+        self.lock.acquire()
+        self.work_queue.append((company, idx))
+        self.lock.release()
+
+    def __dequeue(self) -> Union[Tuple[Company, int], None]:
+        while True:
+            self.lock.acquire()
+            if self.work_queue is None:
+                self.lock.release()
+                return None
+            if len(self.work_queue) == 0:
+                self.lock.release()
+                time.sleep(0.25)
+                continue
+            company, idx = self.work_queue[0]
+            self.work_queue = self.work_queue[1:]
+            self.lock.release()
+            return company, idx
+
+    def __company_worker_th(self, days: Days, company_counts: int, stat: ScanStatistic):
+        # self.work_queue 에서 하나를 빼와서 처리한다. self.work_queue가 None이면 종료 한다.
+        # 큐가 비었으면, 쉰다.
+        while True:
+            val = self.__dequeue()
+            if val is None:
+                return
+            company, idx = val
+            start: float = time.time()
+            json_file_name = None
+            company = self.__add_mail_count_info(company, days)
+            company = self.__add_mail_inode_info(company)
+            if len(company.users) != 0:
+                json_file_name = save_company_as_json(company, self.report.report_path)
+            self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
+            update_statistic(stat, company)
+
+    def __make_worker_ths(self, days: Days, company_counts: int, stat: ScanStatistic):
+        self.work_queue = []
+        h_threads: List[threading.Thread] = []
+        max_work_threads = self.setting_provider.system.max_work_threads
+        for idx in range(max_work_threads):
+            h_thread = threading.Thread(target=self.__company_worker_th, args=(days, company_counts, stat))
+            h_thread.daemon = True
+            h_thread.start()
+            h_threads.append(h_thread)
+        return h_threads
+
+
 
     def report_user_and_company(self, days: Days, company_id: int = -1):
         user_counts = self.get_users_count()
@@ -204,16 +266,12 @@ class PostgresqlSqlScanner:
         stat: ScanStatistic = ScanStatistic.get_empty_statistic()
 
         self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
+        h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_id)):
-            start: float = time.time()
-            json_file_name = None
-            company = self.__add_mail_count_info(company, days)
-            company = self.__add_mail_inode_info(company)
-            if len(company.users) != 0:
-                json_file_name = save_company_as_json(company, self.report.report_path)
-            self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
-            update_statistic(stat, company)
-            #self.__pg_disconnect()
+            self.__enqueue(company, idx)
+        self.__wait_for_processing()
+        for h_thread in h_threads:
+            h_thread.join()
         stat.scan_end_at = datetime.datetime.now()
         self.logger.companies_scan_complete_logging(stat)
 

@@ -1,3 +1,5 @@
+system:
+  max-work-threads: 8
 report:
   report-path: /opt/mail-migration-data/report
 logging:
