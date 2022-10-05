@@ -51,6 +51,7 @@ class Company:
     empty_mail_box_user_count: int
     not_exist_user_in_pgsql: int
     not_exist_user_in_sqlite: int
+    source_path_not_match_mails: int
 
 
 def save_company_as_json(company: Company, save_path: str) -> str:

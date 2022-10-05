@@ -40,6 +40,7 @@ class ScanStatistic:
     not_exist_user_in_sqlite: int
     available_user_count: int
     empty_mail_box_user_count: int
+    source_path_not_match_mails: int
 
     @staticmethod
     def get_empty_statistic():
@@ -59,7 +60,8 @@ class ScanStatistic:
             not_exist_user_in_pgsql=0,
             not_exist_user_in_sqlite=0,
             available_user_count=0,
-            empty_mail_box_user_count=0
+            empty_mail_box_user_count=0,
+            source_path_not_match_mails=0
         )
 
 
@@ -77,3 +79,4 @@ def update_statistic(stat: ScanStatistic, company: Company):
     stat.not_exist_user_in_sqlite += company.not_exist_user_in_sqlite
     stat.available_user_count += len(company.users)
     stat.empty_mail_box_user_count += company.empty_mail_box_user_count
+    stat.source_path_not_match_mails += company.source_path_not_match_mails

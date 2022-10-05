@@ -1,4 +1,6 @@
 import datetime
+import os
+from typing import List
 
 from pydantic import BaseSettings
 from dependency_injector import containers, providers
@@ -6,7 +8,7 @@ from dependency_injector import containers, providers
 from models.day_models import Days
 from service.logging_service import LoggingService
 from service.mail_file_checker_service import MailMessageFileChecker
-from utils.utills import get_property
+from utils.utills import get_property, parser_dir_list
 
 
 class DatabaseSettings:
@@ -20,8 +22,9 @@ class DatabaseSettings:
 
 class MailMoveSettings:
     property = get_property()["mail"]["path"]
-    origin_mdata_path: str = property["origin-mdata-path"]
-    new_mdata_path: str = property["new-mdata-path"]
+    origin_mdata_path: List[str] = parser_dir_list(property["origin-mdata-path"])
+    new_mdata_path: List[str] = parser_dir_list(property["new-mdata-path"])
+
 
 class DateRangeSettings:
     property = get_property()["date-range"]
@@ -51,7 +54,6 @@ class ApplicationSettings(BaseSettings):
     db: DatabaseSettings = DatabaseSettings()
     report: ReportSettings = ReportSettings()
     move_setting: MailMoveSettings = MailMoveSettings()
-
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

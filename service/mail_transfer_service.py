@@ -37,7 +37,7 @@ class MailTransferService:
 
     def __copy_mail_file(self, org_full_path: str) -> Union[str, None]:
         if self.move_setting.origin_mdata_path not in org_full_path:
-            log.error("application.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다 : org_full_path=%s, %s" %
+            log.debug("application.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다. (SKIP) : org_full_path=%s, %s" %
                       (org_full_path, self.__make_log_identify()))
             return None
         elif os.path.exists(self.move_setting.new_mdata_path) is False or os.path.isdir(self.move_setting.new_mdata_path) is False:

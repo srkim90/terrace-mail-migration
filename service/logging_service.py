@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import threading
 import time
@@ -7,7 +8,7 @@ from typing import Union
 
 from models.company_models import Company
 from models.company_scan_statistic_models import ScanStatistic
-from utils.utills import get_property
+from utils.utills import get_property, parser_dir_list
 
 
 class LogLevel(Enum):
@@ -174,37 +175,46 @@ class LoggingService:
             self.minor("    -> Empty company, skip report")
 
     def companies_scan_start_up_logging(self, end_day: str, start_day: str, user_counts: int, company_counts: int):
+        prop: dict = get_property()
+        prop["mail"]["path"]["origin-mdata-path"] = parser_dir_list(prop["mail"]["path"]["origin-mdata-path"])
+        prop["mail"]["path"]["new-mdata-path"] = parser_dir_list(prop["mail"]["path"]["new-mdata-path"])
+        del(prop["date-range"])
+        setting_json = json.dumps(prop, indent=4, ensure_ascii=False)
         self.info("====== START SCAN FOR MAIL DATA MIGRATION ======")
         self.info("------------------------------------------------")
         self.info(" [Preview]")
-        self.info("    - target company counts : %d" % company_counts)
-        self.info("    - target user counts    : %d" % user_counts)
-        self.info("    - scan date range       : %s ~ %s" % (start_day, end_day))
+        self.info("    - target company counts        : %d" % company_counts)
+        self.info("    - target user counts           : %d" % user_counts)
+        self.info("    - scan date range              : %s ~ %s" % (start_day, end_day))
+        self.info("------------------------------------------------")
+        self.info(" [Settings]")
+        self.info("%s" % (setting_json,))
         self.info("------------------------------------------------")
 
     def companies_scan_complete_logging(self, stat: ScanStatistic):
         self.info("====== END SCAN FOR MAIL DATA MIGRATION ======")
         self.info("------------------------------------------------")
         self.info(" [Time]")
-        self.info("    - scan start date           : %s" % stat.scan_start_at.strftime("%Y-%m-%d %H:%M:%S"))
-        self.info("    - scan end date             : %s" % stat.scan_end_at.strftime("%Y-%m-%d %H:%M:%S"))
-        self.info("    - scan time consume         : %d sec" % (stat.scan_end_at - stat.scan_start_at).seconds)
+        self.info("    - scan start date              : %s" % stat.scan_start_at.strftime("%Y-%m-%d %H:%M:%S"))
+        self.info("    - scan end date                : %s" % stat.scan_end_at.strftime("%Y-%m-%d %H:%M:%S"))
+        self.info("    - scan time consume            : %d sec" % (stat.scan_end_at - stat.scan_start_at).seconds)
         self.info("------------------------------------------------")
         self.info(" [Mail]")
-        self.info("    - company_mail_count        : %s" % stat.company_mail_count)
-        self.info("    - company_mail_size         : %0.2f MB" % (stat.company_mail_size / (1024 * 1024)))
+        self.info("    - company_mail_count           : %s" % stat.company_mail_count)
+        self.info("    - source_path_not_match_mails  : %s" % stat.source_path_not_match_mails)
+        self.info("    - company_mail_size            : %0.2f MB" % (stat.company_mail_size / (1024 * 1024)))
         self.info("------------------------------------------------")
         self.info(" [Users]")
-        self.info("    - available_user_count      : %s" % stat.available_user_count)
-        self.info("    - empty_mail_box_user_count : %s" % stat.empty_mail_box_user_count)
-        self.info("    - not_exist_user_in_pgsql   : %s" % stat.not_exist_user_in_pgsql)
-        self.info("    - not_exist_user_in_sqlite  : %s" % stat.not_exist_user_in_sqlite)
+        self.info("    - available_user_count         : %s" % stat.available_user_count)
+        self.info("    - empty_mail_box_user_count    : %s" % stat.empty_mail_box_user_count)
+        self.info("    - not_exist_user_in_pgsql      : %s" % stat.not_exist_user_in_pgsql)
+        self.info("    - not_exist_user_in_sqlite     : %s" % stat.not_exist_user_in_sqlite)
         self.info("------------------------------------------------")
         self.info(" [Hard-Link]")
-        self.info("    - hardlink_mail_count       : %s" % stat.company_hardlink_mail_count)
-        self.info("    - non_link_mail_count       : %s" % stat.company_non_link_mail_count)
-        self.info("    - mail_unique_count         : %s" % stat.company_hardlink_mail_unique_count)
-        self.info("    - hardlink_mail_size        : %0.2f MB" % (stat.company_hardlink_mail_size / (1024 * 1024)))
-        self.info("    - non_link_mail_size        : %0.2f MB" % (stat.company_non_link_mail_size / (1024 * 1024)))
-        self.info("    - hardlink_mail_unique_size : %0.2f MB" % (stat.company_hardlink_mail_unique_size / (1024 * 1024)))
+        self.info("    - hardlink_mail_count          : %s" % stat.company_hardlink_mail_count)
+        self.info("    - non_link_mail_count          : %s" % stat.company_non_link_mail_count)
+        self.info("    - mail_unique_count            : %s" % stat.company_hardlink_mail_unique_count)
+        self.info("    - hardlink_mail_size           : %0.2f MB" % (stat.company_hardlink_mail_size / (1024 * 1024)))
+        self.info("    - non_link_mail_size           : %0.2f MB" % (stat.company_non_link_mail_size / (1024 * 1024)))
+        self.info("    - hardlink_mail_unique_size    : %0.2f MB" % (stat.company_hardlink_mail_unique_size / (1024 * 1024)))
         self.info("------------------------------------------------")

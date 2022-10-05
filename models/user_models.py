@@ -33,4 +33,5 @@ class User:
     user_mail_count: int
     user_mail_size: int
     user_mail_size_in_db: int
+    source_path_not_match_mails: int
     messages: List[MailMessage]

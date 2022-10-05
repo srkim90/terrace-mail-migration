@@ -7,7 +7,6 @@ from typing import List
 import yaml as yaml
 
 
-
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime.datetime):
@@ -22,8 +21,21 @@ def mail_scanner_print_usage():
         info = fd.read()
     print(info)
 
+
 def is_windows() -> bool:
     return "window" in platform.system().lower()
+
+
+def parser_dir_list(paths: str) -> List[str]:
+    parsed_path = []
+    for path in paths.split(","):
+        path = path.strip()
+        if os.path.exists(path) is False:
+            print("Error. Not exist dir, check your application.yml : %s" % (path,))
+            exit()
+        parsed_path.append(path)
+    return parsed_path
+
 
 def get_property() -> dict:
     profile_path = "profile"
@@ -34,7 +46,10 @@ def get_property() -> dict:
     common_config: dict = yaml.safe_load(open(common_config_file, encoding="utf-8"))
     return common_config
 
-setting_provider=None
+
+setting_provider = None
+
+
 def load_property():
     global setting_provider
     if setting_provider is None:
@@ -43,7 +58,7 @@ def load_property():
     return setting_provider
 
 
-def make_data_file_path(file_path: str, sub_dirs: List[str]=None) -> str:
+def make_data_file_path(file_path: str, sub_dirs: List[str] = None) -> str:
     load_property()
     local_test_data_path = ""
     if platform.system() == "Windows":

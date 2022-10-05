@@ -13,19 +13,21 @@ from service.logging_service import LoggingService
 from service.pgsql_connector_service import PostgresqlConnector
 from service.property_provider_service import ApplicationSettings, ApplicationContainer, ReportSettings
 from service.sqlite_connector_service import SqliteConnector
-from utils.utills import make_data_file_path
+from utils.utills import make_data_file_path, is_windows
 
 
 class PostgresqlSqlScanner:
     logger: LoggingService = ApplicationContainer().logger()
     setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
     mail_checker = ApplicationContainer().mail_file_checker()
+    is_windows: bool
 
     def __init__(self) -> None:
         super().__init__()
         self.report: ReportSettings = self.setting_provider.report
         self.logger.info("PostgresqlScanner start up")
         self.pg_conn = None
+        self.is_windows = is_windows()
 
     def __pg_disconnect(self) -> None:
         if self.pg_conn is None:
@@ -82,6 +84,7 @@ class PostgresqlSqlScanner:
                 user_mail_count=0,
                 user_mail_size=0,
                 user_mail_size_in_db=0,
+                source_path_not_match_mails=0,
                 messages=[]
             ))
         return users
@@ -92,6 +95,23 @@ class PostgresqlSqlScanner:
     def __check_eml_data(self, message: MailMessage) -> (float, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(message.full_path)
         return stat.st_ctime, stat.st_ino, stat.st_size
+
+    def __mail_source_path_filter(self, user: User, messages: List[MailMessage]) -> List[MailMessage]:
+        if self.is_windows is True:
+            return messages
+        new_message: List[MailMessage] = []
+        for msg in messages:
+            f_checked = False
+            for valid_path in self.setting_provider.move_setting.origin_mdata_path:
+                if valid_path in msg.full_path:
+                    f_checked = True
+                    break
+            if f_checked is False:
+                self.logger.debug("mail path not in origin_mdata_path, skip : %s" % (msg.full_path,))
+                user.source_path_not_match_mails += 1
+                continue
+            new_message.append(msg)
+        return new_message
 
     def __add_mail_count_info(self, company: Company, days: Days) -> Company:
         existing_users: List[User] = []
@@ -106,8 +126,6 @@ class PostgresqlSqlScanner:
                 company.not_exist_user_in_sqlite += 1
                 continue
             user.user_mail_count, user.user_mail_size = sqlite.get_target_mail_count(days)
-            company.company_mail_count += user.user_mail_count
-            company.company_mail_size_in_db += user.user_mail_size
             existing_users.append(user)
 
             self.logger.minor("company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
@@ -117,14 +135,23 @@ class PostgresqlSqlScanner:
                 continue
 
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
-            messages: List[MailMessage] = sqlite.get_target_mail_list(days)
+            messages: List[MailMessage] = self.__mail_source_path_filter(user, sqlite.get_target_mail_list(days))
+            user.user_mail_count = len(messages) # 타겟 경로 검사기능떄문에, 필터링 된 결과로 다시 계산 해줘야 한다.
+            user.user_mail_size = 0
             for item in messages:
                 # step3 : 이메일 파일 하나하나 메타데이터 읽어 작성하는 메일 리스트에 업데이트 해준다.
                 item.st_ctime, item.st_ino, item.st_size = self.__check_eml_data(item)
                 company.company_mail_size += item.st_size
                 user.user_mail_size_in_db += item.st_size
+                user.user_mail_size += item.msg_size
             user.messages = messages
+
+            company.source_path_not_match_mails += user.source_path_not_match_mails
+            company.company_mail_count += user.user_mail_count
+            company.company_mail_size_in_db += user.user_mail_size
+
         company.users = existing_users
+
         return company
 
     # inode 정보를 업데이트 해서 하드 링크여부를 파악한다.
@@ -225,6 +252,7 @@ class PostgresqlSqlScanner:
                 company_hardlink_mail_unique_size=0,
                 not_exist_user_in_pgsql=0,
                 not_exist_user_in_sqlite=0,
+                source_path_not_match_mails=0,
                 empty_mail_box_user_count=0
             )
 
