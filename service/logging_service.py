@@ -169,9 +169,9 @@ class LoggingService:
                     company.company_mail_size / (1024 * 1024), time_consumed, json_file_name)
         self.info(report)
         if company.not_exist_user_in_pgsql > 0:
-            self.error("    -> count of not exist user in pgsql : %d" % (company.not_exist_user_in_pgsql,))
+            self.minor("    -> count of not exist user in pgsql : %d" % (company.not_exist_user_in_pgsql,))
         if company.not_exist_user_in_sqlite > 0:
-            self.error("    -> count of not exist sqlite db file : %d" % (company.not_exist_user_in_sqlite,))
+            self.minor("    -> count of not exist sqlite db file : %d" % (company.not_exist_user_in_sqlite,))
         if report_count == 0:
             self.minor("    -> Empty company, skip report")
 
