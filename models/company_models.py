@@ -54,6 +54,8 @@ class Company:
 
 
 def save_company_as_json(company: Company, save_path: str) -> str:
+    if os.path.exists(save_path) is False:
+        os.makedirs(save_path)
     file_name = os.path.join(save_path, "company_report_%d_%d_%dMB.json" % (
     company.id, company.company_mail_count, company.company_mail_size / (1024 * 1024)))
     json_data = Company.to_json(company, indent=4, ensure_ascii=False).encode("utf-8")
