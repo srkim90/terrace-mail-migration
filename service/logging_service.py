@@ -30,8 +30,8 @@ class LoggingSettings:
     log_path: str = property["log-path"]
     file_log_level: LogLevel = LogLevel.convertLogLevel(property["file-log-level"])
     stdout_log_level: LogLevel = LogLevel.convertLogLevel(property["stdout-log-level"])
-    max_logfile_size: int = int(property["max-logfile-size"])
-    max_logfile_count: int = int(property["max-logfile-count"])
+    max_logfile_size: int = int(property["max-logfile-size"]) * (1024 * 1024)
+    #max_logfile_count: int = int(property["max-logfile-count"])
 
 
 class Colors(Enum):
@@ -114,14 +114,15 @@ class LoggingBase:
 
     def __make_log_file_name(self) -> Union[str, None]:
         max_logfile_size = self.settings.max_logfile_size
-        max_logfile_count = self.settings.max_logfile_count
         log_path = self.settings.log_path
         if os.path.exists(log_path) is False:
             os.makedirs(log_path)
             return None
         file_name = "%s.log" % (datetime.datetime.now().strftime("%Y%m%d"),)
         file_name = os.path.join(log_path,  file_name)
-        #log_status: os.stat_result = os.stat(file_name)
+        log_status: os.stat_result = os.stat(file_name)
+        if max_logfile_size is not None and log_status.st_size > max_logfile_size:
+            return None
         return file_name
 
     def write_log(self, log_message: str, level: LogLevel) -> None:
