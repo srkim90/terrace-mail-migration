@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Union
 
 from models.company_models import Company
+from models.company_scan_statistic_models import ScanStatistic
 from utils.utills import get_property
 
 
@@ -26,11 +27,11 @@ class LogLevel(Enum):
 
 class LoggingSettings:
     property = get_property()["logging"]
-    log_path: str = property["log_path"]
-    file_log_level: LogLevel = LogLevel.convertLogLevel(property["file_log_level"])
-    stdout_log_level: LogLevel = LogLevel.convertLogLevel(property["stdout_log_level"])
-    max_logfile_size: int = int(property["max_logfile_size"])
-    max_logfile_count: int = int(property["max_logfile_count"])
+    log_path: str = property["log-path"]
+    file_log_level: LogLevel = LogLevel.convertLogLevel(property["file-log-level"])
+    stdout_log_level: LogLevel = LogLevel.convertLogLevel(property["stdout-log-level"])
+    max_logfile_size: int = int(property["max-logfile-size"])
+    max_logfile_count: int = int(property["max-logfile-count"])
 
 
 class Colors(Enum):
@@ -112,14 +113,15 @@ class LoggingBase:
         self.write_log(log_message, LogLevel.ERROR)
 
     def __make_log_file_name(self) -> Union[str, None]:
-        return None
         max_logfile_size = self.settings.max_logfile_size
         max_logfile_count = self.settings.max_logfile_count
         log_path = self.settings.log_path
         if os.path.exists(log_path) is False:
             return None
-        file_name = os.path.join(log_path, "")
-        os.stat(file_name)
+        file_name = "%s.log" % (datetime.datetime.now().strftime("%Y%m%d"),)
+        file_name = os.path.join(log_path,  file_name)
+        #log_status: os.stat_result = os.stat(file_name)
+        return file_name
 
     def write_log(self, log_message: str, level: LogLevel) -> None:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -155,7 +157,7 @@ class LoggingService:
     def error(self, log_message: str) -> None:
         logger.error(log_message)
 
-    def company_logging(self, idx: int, company_counts: int, company: Company, json_file_name: str, start_time: float):
+    def a_company_complete_logging(self, idx: int, company_counts: int, company: Company, json_file_name: str, start_time: float):
         time_consumed = time.time() - start_time
         report_count = len(company.users)
         report = "[%d/%d] Company scan completed : company_id=%d, name=%s, user_count=%d, mail_count=%d, mail_size=%0.2f(MB), time_consumed=%0.2f(sec), report_file=%s" \
@@ -168,3 +170,39 @@ class LoggingService:
             self.error("    -> count of not exist sqlite db file : %d" % (company.not_exist_user_in_sqlite,))
         if report_count == 0:
             self.minor("    -> Empty company, skip report")
+
+    def companies_scan_start_up_logging(self, end_day: str, start_day: str, user_counts: int, company_counts: int):
+        self.info("====== START SCAN FOR MAIL DATA MIGRATION ======")
+        self.info("------------------------------------------------")
+        self.info(" [Preview]")
+        self.info("    - target company counts : %d" % company_counts)
+        self.info("    - target user counts    : %d" % user_counts)
+        self.info("    - scan date range       : %s ~ %s" % (start_day, end_day))
+        self.info("------------------------------------------------")
+
+    def companies_scan_complete_logging(self, stat: ScanStatistic):
+        self.info("====== END SCAN FOR MAIL DATA MIGRATION ======")
+        self.info("------------------------------------------------")
+        self.info(" [Time]")
+        self.info("    - scan start date           : %s" % stat.scan_start_at.strftime("%Y-%m-%d %H:%M:%S"))
+        self.info("    - scan end date             : %s" % stat.scan_end_at.strftime("%Y-%m-%d %H:%M:%S"))
+        self.info("    - scan time consume         : %d sec" % (stat.scan_end_at - stat.scan_start_at).seconds)
+        self.info("------------------------------------------------")
+        self.info(" [Mail]")
+        self.info("    - company_mail_count        : %s" % stat.company_mail_count)
+        self.info("    - company_mail_size         : %0.2f MB" % (stat.company_mail_size / (1024 * 1024)))
+        self.info("------------------------------------------------")
+        self.info(" [Users]")
+        self.info("    - available_user_count      : %s" % stat.available_user_count)
+        self.info("    - empty_mail_box_user_count : %s" % stat.empty_mail_box_user_count)
+        self.info("    - not_exist_user_in_pgsql   : %s" % stat.not_exist_user_in_pgsql)
+        self.info("    - not_exist_user_in_sqlite  : %s" % stat.not_exist_user_in_sqlite)
+        self.info("------------------------------------------------")
+        self.info(" [Hard-Link]")
+        self.info("    - hardlink_mail_count       : %s" % stat.company_hardlink_mail_count)
+        self.info("    - non_link_mail_count       : %s" % stat.company_non_link_mail_count)
+        self.info("    - mail_unique_count         : %s" % stat.company_hardlink_mail_unique_count)
+        self.info("    - hardlink_mail_size        : %0.2f MB" % (stat.company_hardlink_mail_size / (1024 * 1024)))
+        self.info("    - non_link_mail_size        : %0.2f MB" % (stat.company_non_link_mail_size / (1024 * 1024)))
+        self.info("    - hardlink_mail_unique_size : %0.2f MB" % (stat.company_hardlink_mail_unique_size / (1024 * 1024)))
+        self.info("------------------------------------------------")

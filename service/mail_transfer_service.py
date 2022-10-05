@@ -36,17 +36,17 @@ class MailTransferService:
         return self.is_window
 
     def __copy_mail_file(self, org_full_path: str) -> Union[str, None]:
-        if self.move_setting.origin_dir_mdata not in org_full_path:
-            log.error("application-move.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다 : org_full_path=%s, %s" %
+        if self.move_setting.origin_mdata_path not in org_full_path:
+            log.error("application.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다 : org_full_path=%s, %s" %
                       (org_full_path, self.__make_log_identify()))
             return None
-        elif os.path.exists(self.move_setting.new_dir_mdata) is False or os.path.isdir(self.move_setting.new_dir_mdata) is False:
-            log.error("이동 대상 디렉토리가 존재하지 않거나, 유효하지 않습니다. : new_dir_mdata=%s, %s" %
-                      (self.move_setting.new_dir_mdata, self.__make_log_identify()))
+        elif os.path.exists(self.move_setting.new_mdata_path) is False or os.path.isdir(self.move_setting.new_mdata_path) is False:
+            log.error("이동 대상 디렉토리가 존재하지 않거나, 유효하지 않습니다. : new_mdata_path=%s, %s" %
+                      (self.move_setting.new_mdata_path, self.__make_log_identify()))
             return None
         file_name = org_full_path.split(self.dir_separator)[-1]
-        new_dir = org_full_path.replace(self.move_setting.origin_dir_mdata, "").replace(file_name, "").strip()
-        new_dir = os.path.join(self.move_setting.new_dir_mdata, new_dir)
+        new_dir = org_full_path.replace(self.move_setting.origin_mdata_path, "").replace(file_name, "").strip()
+        new_dir = os.path.join(self.move_setting.new_mdata_path, new_dir)
         if os.path.exists(new_dir) is False:
             os.makedirs(new_dir)
         full_new_file = os.path.join(new_dir, file_name)

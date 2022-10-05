@@ -1,0 +1,37 @@
+report:
+  report-path: /opt/mail-migration-data/report
+logging:
+  log-path: /opt/mail-migration-data/log
+  file-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
+  max-logfile-size: 64 # MB
+  max-logfile-count: 10
+mail:
+  path:
+    origin-mdata-path: "
+                      /data/mdata,
+                      /data/mdata2,
+                      /data/mdata3,
+                      /data/mdata4,
+                      /data/mdata5,
+                      /data/mdata6
+    "
+    new-mdata-path: "
+                    /data/new_mdata10,
+                    /data/new_mdata11,
+                    /data/new_mdata12,
+                    /data/new_mdata13,
+                    /data/new_mdata14,
+                    /data/new_mdata15
+    "
+database:
+  postgresql:
+    host: 10.0.1.251
+    port: 5432
+    username: mailadm
+    password: pgadmin80!@
+    database: tims
+date-range:
+  start-day: 2022-03-01 # 이관 시작일 : ex> 2022.01.01, null 일 경우, 종료일 이전 모든 시간에 대해서 작업
+  end-day: 2022-09-01   # 이관 종료일 : ex> 2022.08.32, Not null
+

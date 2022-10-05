@@ -1,0 +1,24 @@
+report:
+  report-path: D:\data\report
+  local-test-data-path: D:\data\mindex # windows 일 경우에만 동작한다.
+logging:
+  log-path: D:\data\log
+  file-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
+  max-logfile-size: 64 # MB
+  max-logfile-count: 10
+mail:
+  path:
+    origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
+    new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+database:
+  postgresql:
+    host: 172.22.1.103
+    port: 5432
+    username: mailadm
+    password: pgadmin80!@
+    database: do
+date-range:
+  start-day: 2022-03-01 # 이관 시작일 : ex> 2022.01.01, null 일 경우, 종료일 이전 모든 시간에 대해서 작업
+  end-day: 2022-09-01   # 이관 종료일 : ex> 2022.08.32, Not null
+

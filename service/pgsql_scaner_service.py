@@ -1,9 +1,11 @@
+import datetime
 import logging
 import os
 import time
 from typing import List, Dict
 
 from models.company_models import Company, save_company_as_json
+from models.company_scan_statistic_models import ScanStatistic, update_statistic
 from models.day_models import Days
 from models.mail_models import MailMessage
 from models.user_models import User
@@ -111,6 +113,7 @@ class PostgresqlSqlScanner:
             self.logger.minor("company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
                 company.name, user.name, user.login_id, user.user_mail_count, user.user_mail_size))
             if user.user_mail_count == 0:
+                company.empty_mail_box_user_count += 1
                 continue
 
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
@@ -160,16 +163,20 @@ class PostgresqlSqlScanner:
         for row in self.__execute_query(query):
             return row[0]
 
-    def get_users_count(self, company_id: int = -1):
-        where = ""
-        if company_id >= 0:
-            where = " where id = %d" % (company_id,)
-        query = "select count(*) from go_companies" + where
+    def get_users_count(self):
+        query = "select count(*) from go_users where company_id in (select id from go_companies)"
         for row in self.__execute_query(query):
             return row[0]
 
+
     def report_user_and_company(self, days: Days, company_id: int = -1):
+        user_counts = self.get_users_count()
         company_counts = self.get_companies_count()
+        end_day = self.setting_provider.date_range.end_day.strftime("%Y-%m-%d")
+        start_day = self.setting_provider.date_range.start_day.strftime("%Y-%m-%d")
+        stat: ScanStatistic = ScanStatistic.get_empty_statistic()
+
+        self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
         for idx, company in enumerate(self.find_company(days, company_id)):
             start: float = time.time()
             json_file_name = None
@@ -177,8 +184,11 @@ class PostgresqlSqlScanner:
             company = self.__add_mail_inode_info(company)
             if len(company.users) != 0:
                 json_file_name = save_company_as_json(company, self.report.report_path)
-            self.logger.company_logging(idx, company_counts, company, json_file_name, start)
+            self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
+            update_statistic(stat, company)
             #self.__pg_disconnect()
+        stat.scan_end_at = datetime.datetime.now()
+        self.logger.companies_scan_complete_logging(stat)
 
     def find_company(self, days: Days, company_id: int = -1) -> List[Company]:
         where = ""
@@ -214,7 +224,8 @@ class PostgresqlSqlScanner:
                 company_non_link_mail_size=0,
                 company_hardlink_mail_unique_size=0,
                 not_exist_user_in_pgsql=0,
-                not_exist_user_in_sqlite=0
+                not_exist_user_in_sqlite=0,
+                empty_mail_box_user_count=0
             )
 
             company.users = self.find_users(company)

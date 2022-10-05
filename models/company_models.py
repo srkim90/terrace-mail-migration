@@ -48,6 +48,7 @@ class Company:
     company_non_link_mail_size: int          # G : 회사의 하드 링크가 없는 메일의 용량
     company_hardlink_mail_unique_size: int   # H : 회사의 하드 링크가 있는 메일의 중복을 제외한 용량
     users: List[User]
+    empty_mail_box_user_count: int
     not_exist_user_in_pgsql: int
     not_exist_user_in_sqlite: int
 

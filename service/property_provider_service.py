@@ -20,16 +20,13 @@ class DatabaseSettings:
 
 class MailMoveSettings:
     property = get_property()["mail"]["path"]
-    origin_dir_mdata: str = property["origin-dir-mdata"]
-    new_dir_mdata: str = property["new-dir-mdata"]
-
-
-
+    origin_mdata_path: str = property["origin-mdata-path"]
+    new_mdata_path: str = property["new-mdata-path"]
 
 class DateRangeSettings:
-    property = get_property()["date_range"]
-    start_day: datetime.datetime = property["start_day"]
-    end_day: datetime.datetime = property["end_day"]
+    property = get_property()["date-range"]
+    start_day: datetime.datetime = property["start-day"]
+    end_day: datetime.datetime = property["end-day"]
 
     if type(start_day) == datetime.date:
         start_day = datetime.datetime.combine(start_day, datetime.datetime.min.time())
@@ -42,8 +39,11 @@ class DateRangeSettings:
 
 class ReportSettings(BaseSettings):
     property = get_property()["report"]
-    report_path: str = property["report_path"]
-    local_test_data_path: str = property["local_test_data_path"]
+    report_path: str = property["report-path"]
+    if "local-test-data-path" in property.keys():
+        local_test_data_path: str = property["local-test-data-path"]
+    else:
+        local_test_data_path = ""
 
 
 class ApplicationSettings(BaseSettings):
@@ -51,6 +51,7 @@ class ApplicationSettings(BaseSettings):
     db: DatabaseSettings = DatabaseSettings()
     report: ReportSettings = ReportSettings()
     move_setting: MailMoveSettings = MailMoveSettings()
+
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

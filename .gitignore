@@ -1,3 +1,4 @@
 *.pyc
 binary/Python-3.6.15-minimum
 profile/*
+.idea/*

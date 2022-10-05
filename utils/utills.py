@@ -22,17 +22,16 @@ def mail_scanner_print_usage():
         info = fd.read()
     print(info)
 
+def is_windows() -> bool:
+    return "window" in platform.system().lower()
 
 def get_property() -> dict:
-    common_config_file = os.path.join("profile", "application-common.yml")
-    scan_config_file = os.path.join("profile", "application-scan.yml")
-    move_config_file = os.path.join("profile", "application-move.yml")
-
+    profile_path = "profile"
+    profile_name = "application.yml"
+    if is_windows() is True:
+        profile_name = "application-develop.yml"
+    common_config_file = os.path.join(profile_path, profile_name)
     common_config: dict = yaml.safe_load(open(common_config_file, encoding="utf-8"))
-    scan_config: dict = yaml.safe_load(open(scan_config_file, encoding="utf-8"))
-    move_config: dict = yaml.safe_load(open(move_config_file, encoding="utf-8"))
-    common_config.update(scan_config)
-    common_config.update(move_config)
     return common_config
 
 setting_provider=None
