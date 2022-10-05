@@ -121,9 +121,10 @@ class LoggingBase:
             return None
         file_name = "%s.log" % (datetime.datetime.now().strftime("%Y%m%d"),)
         file_name = os.path.join(log_path,  file_name)
-        log_status: os.stat_result = os.stat(file_name)
-        if max_logfile_size is not None and log_status.st_size > max_logfile_size:
-            return None
+        if os.path.exists(file_name) is True:
+            log_status: os.stat_result = os.stat(file_name)
+            if max_logfile_size is not None and log_status.st_size > max_logfile_size:
+                return None
         return file_name
 
     def write_log(self, log_message: str, level: LogLevel) -> None:
