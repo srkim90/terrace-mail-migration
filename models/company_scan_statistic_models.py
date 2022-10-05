@@ -27,6 +27,19 @@ class ScanStatistic:
             decoder=datetime.fromisoformat,
             mm_field=fields.DateTime(format='iso')
         ))
+    scan_start_date: datetime = field(
+        metadata=config(
+            encoder=datetime.isoformat,
+            decoder=datetime.fromisoformat,
+            mm_field=fields.DateTime(format='iso')
+        ))
+    scan_end_date: datetime = field(
+        metadata=config(
+            encoder=datetime.isoformat,
+            decoder=datetime.fromisoformat,
+            mm_field=fields.DateTime(format='iso')
+        ))
+
     company_mail_size_in_db: int             # SQLite DB에 집계된 사용자 메일 용량의 합계 (실 파일 사이즈랑 간혹 다르다)
     company_mail_size: int                   # A : 회사의 총 메일 용량 (G+H)
     company_mail_count: int                  # B : 회사의 총 메일 개수 (C+D)
@@ -41,9 +54,12 @@ class ScanStatistic:
     available_user_count: int
     empty_mail_box_user_count: int
     source_path_not_match_mails: int
+    company_count: int
+    available_company_count: int
+
 
     @staticmethod
-    def get_empty_statistic():
+    def get_empty_statistic(scan_end_date: datetime, scan_start_date: datetime):
         return ScanStatistic(
             counting_date_range=None,
             scan_start_at=datetime.now(),
@@ -61,7 +77,11 @@ class ScanStatistic:
             not_exist_user_in_sqlite=0,
             available_user_count=0,
             empty_mail_box_user_count=0,
-            source_path_not_match_mails=0
+            source_path_not_match_mails=0,
+            company_count=0,
+            available_company_count=0,
+            scan_end_date=scan_end_date,
+            scan_start_date=scan_start_date
         )
 
 
@@ -77,6 +97,10 @@ def update_statistic(stat: ScanStatistic, company: Company):
     stat.company_hardlink_mail_unique_size += company.company_hardlink_mail_unique_size
     stat.not_exist_user_in_pgsql += company.not_exist_user_in_pgsql
     stat.not_exist_user_in_sqlite += company.not_exist_user_in_sqlite
-    stat.available_user_count += len(company.users)
+    stat.available_user_count += len(company.users) - company.empty_mail_box_user_count
     stat.empty_mail_box_user_count += company.empty_mail_box_user_count
     stat.source_path_not_match_mails += company.source_path_not_match_mails
+    stat.company_count += 1
+    if stat.available_user_count >= 1:
+        stat.available_company_count += 1
+

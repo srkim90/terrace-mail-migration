@@ -1,5 +1,5 @@
 system:
-  max-work-threads: 8
+  max-work-threads: 12
 report:
   report-path: /opt/mail-migration-data/report
 logging:
@@ -34,5 +34,4 @@ database:
     database: tims
 date-range:
   start-day: 2022-03-01 # 이관 시작일 : ex> 2022.01.01, null 일 경우, 종료일 이전 모든 시간에 대해서 작업
-  end-day: 2022-09-01   # 이관 종료일 : ex> 2022.08.32, Not null
-
+  end-day: 2022-09-01   # 이관 종료일 : ex> 2022.08.32, null 일 경우, 현재시간

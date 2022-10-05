@@ -263,7 +263,7 @@ class PostgresqlSqlScanner:
         company_counts = self.get_companies_count()
         end_day = self.setting_provider.date_range.end_day.strftime("%Y-%m-%d")
         start_day = self.setting_provider.date_range.start_day.strftime("%Y-%m-%d")
-        stat: ScanStatistic = ScanStatistic.get_empty_statistic()
+        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day, self.setting_provider.date_range.start_day)
 
         self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)

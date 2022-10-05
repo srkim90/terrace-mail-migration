@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseSettings
 from dependency_injector import containers, providers
@@ -32,8 +32,14 @@ class MailMoveSettings:
 
 class DateRangeSettings:
     property = get_property()["date-range"]
-    start_day: datetime.datetime = property["start-day"]
-    end_day: datetime.datetime = property["end-day"]
+    try:
+        start_day: Union[datetime.datetime, None] = property["start-day"]
+    except TypeError as e:
+        start_day = datetime.datetime.strptime("1975-01-01 00:00:00.000000", "%Y-%m-%d %H:%M:%S.%f")
+    try:
+        end_day: Union[datetime.datetime, None] = property["end-day"]
+    except TypeError as e:
+        end_day = datetime.datetime.now()
 
     if type(start_day) == datetime.date:
         start_day = datetime.datetime.combine(start_day, datetime.datetime.min.time())
