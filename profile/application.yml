@@ -16,12 +16,12 @@ mail:
                       /data/mdata6
     "
     new-mdata-path: "
-                    /data/new_mdata10,
-                    /data/new_mdata11,
-                    /data/new_mdata12,
-                    /data/new_mdata13,
-                    /data/new_mdata14,
-                    /data/new_mdata15
+                    /data/new_mdata/mdata10,
+                    /data/new_mdata/mdata11,
+                    /data/new_mdata/mdata12,
+                    /data/new_mdata/mdata13,
+                    /data/new_mdata/mdata14,
+                    /data/new_mdata/mdata15
     "
 database:
   postgresql:
