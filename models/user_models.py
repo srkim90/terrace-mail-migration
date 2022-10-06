@@ -31,6 +31,8 @@ class User:
     message_store: str
     mail_uid: str
     user_mail_count: int
+    user_all_mail_count: int
+    user_all_mail_size: int
     user_mail_size: int
     user_mail_size_in_db: int
     source_path_not_match_mails: int

@@ -5,7 +5,7 @@ report:
   local-test-data-path: D:\data\mindex # windows 일 경우에만 동작한다.
 logging:
   log-path: D:\data\log
-  file-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  file-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   max-logfile-size: 10240 # MB
 mail:

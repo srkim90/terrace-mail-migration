@@ -4,7 +4,7 @@ report:
   report-path: /opt/mail-migration-data/report
 logging:
   log-path: /opt/mail-migration-data/log
-  file-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  file-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   max-logfile-size: 10240 # MB
 mail:

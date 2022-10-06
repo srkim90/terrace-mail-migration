@@ -56,6 +56,8 @@ class ScanStatistic:
     source_path_not_match_mails: int
     company_count: int
     available_company_count: int
+    user_all_mail_count: int
+    user_all_mail_size: int
 
 
     @staticmethod
@@ -81,7 +83,9 @@ class ScanStatistic:
             company_count=0,
             available_company_count=0,
             scan_end_date=scan_end_date,
-            scan_start_date=scan_start_date
+            scan_start_date=scan_start_date,
+            user_all_mail_count=0,
+            user_all_mail_size=0
         )
 
 
@@ -100,7 +104,8 @@ def update_statistic(stat: ScanStatistic, company: Company):
     stat.available_user_count += len(company.users) - company.empty_mail_box_user_count
     stat.empty_mail_box_user_count += company.empty_mail_box_user_count
     stat.source_path_not_match_mails += company.source_path_not_match_mails
+    stat.user_all_mail_count += company.user_all_mail_count
+    stat.user_all_mail_size += company.user_all_mail_size
     stat.company_count += 1
     if stat.available_user_count >= 1:
         stat.available_company_count += 1
-

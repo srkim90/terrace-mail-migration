@@ -61,7 +61,9 @@ class SqliteConnector:
             self.conn.close()
             self.conn = None
 
-    def __make_where(self, days: Days):
+    def __make_where(self, days: Union[Days, None]):
+        if days is None:
+            return ""
         s_timestamp = days.get_start_day_timestamp()
         e_timestamp = days.get_end_day_timestamp()
         if e_timestamp is None:
@@ -71,7 +73,7 @@ class SqliteConnector:
             sub_query += " and msg_receive > %s" % s_timestamp
         return sub_query
 
-    def get_target_mail_count(self, days: Days) -> Tuple[int, int]:
+    def get_target_mail_count(self, days: Union[Days, None]) -> Tuple[int, int]:
         size = 0
         count = 0
         cur = self.conn.cursor()

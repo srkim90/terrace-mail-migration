@@ -88,6 +88,8 @@ class PostgresqlSqlScanner:
                 user_mail_size=0,
                 user_mail_size_in_db=0,
                 source_path_not_match_mails=0,
+                user_all_mail_count=0,
+                user_all_mail_size=0,
                 messages=[]
             ))
         return users
@@ -129,6 +131,7 @@ class PostgresqlSqlScanner:
                 company.not_exist_user_in_sqlite += 1
                 continue
             user.user_mail_count, user.user_mail_size = sqlite.get_target_mail_count(days)
+            user.user_all_mail_count, user.user_all_mail_size = sqlite.get_target_mail_count(None)
             existing_users.append(user)
 
             self.logger.minor("company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
@@ -152,6 +155,8 @@ class PostgresqlSqlScanner:
             company.source_path_not_match_mails += user.source_path_not_match_mails
             company.company_mail_count += user.user_mail_count
             company.company_mail_size_in_db += user.user_mail_size
+            company.user_all_mail_count += user.user_all_mail_count
+            company.user_all_mail_size += user.user_all_mail_size
 
         company.users = existing_users
 
@@ -311,7 +316,9 @@ class PostgresqlSqlScanner:
                 not_exist_user_in_pgsql=0,
                 not_exist_user_in_sqlite=0,
                 source_path_not_match_mails=0,
-                empty_mail_box_user_count=0
+                empty_mail_box_user_count=0,
+                user_all_mail_count=0,
+                user_all_mail_size=0
             )
 
             company.users = self.find_users(company)
