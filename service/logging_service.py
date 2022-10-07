@@ -113,6 +113,9 @@ class LoggingBase:
     def error(self, log_message: str) -> None:
         self.write_log(log_message, LogLevel.ERROR)
 
+    def make_log_file_name(self):
+        return self.__make_log_file_name()
+
     def __make_log_file_name(self) -> Union[str, None]:
         max_logfile_size = self.settings.max_logfile_size
         log_path = self.settings.log_path
@@ -151,6 +154,9 @@ class LoggingService:
 
     def __init__(self):
         pass
+
+    def make_log_file_name(self):
+        return logger.make_log_file_name()
 
     def debug(self, log_message: str) -> None:
         logger.debug(log_message)
@@ -199,6 +205,10 @@ class LoggingService:
     def companies_scan_complete_logging(self, stat: ScanStatistic):
         self.info("====== END SCAN FOR MAIL DATA MIGRATION ======")
         self.info("------------------------------------------------")
+        self.info(" [Report]")
+        self.info("    - report path                  : %s" % stat.report_save_path)
+        self.info("    - log_files                    : %s" % stat.log_file_names)
+        self.info("------------------------------------------------")
         self.info(" [Time]")
         self.info("    - scan start time              : %s" % stat.scan_start_at.strftime("%Y-%m-%d %H:%M:%S"))
         self.info("    - scan end time                : %s" % stat.scan_end_at.strftime("%Y-%m-%d %H:%M:%S"))
@@ -207,27 +217,27 @@ class LoggingService:
         self.info("    - scan time consume            : %d sec" % (stat.scan_end_at - stat.scan_start_at).seconds)
         self.info("------------------------------------------------")
         self.info(" [Company]")
-        self.info("    - company_count                : %s" % stat.company_count)
-        self.info("    - available_company_count      : %s" % stat.available_company_count)
+        self.info("    - company count                : %s" % stat.company_count)
+        self.info("    - available company count      : %s" % stat.available_company_count)
         self.info("------------------------------------------------")
         self.info(" [Mail]")
-        self.info("    - company_mail_count           : %s" % stat.company_mail_count)
-        self.info("    - source_path_not_match_mails  : %s" % stat.source_path_not_match_mails)
-        self.info("    - company_mail_size            : %0.2f MB" % (stat.company_mail_size / (1024 * 1024),))
-        self.info("    - company_all_mail_count       : %s" % stat.user_all_mail_count)
-        self.info("    - company_all_mail_size        : %0.2f MB" % (stat.user_all_mail_size / (1024 * 1024),))
+        self.info("    - company mail count           : %s" % stat.company_mail_count)
+        self.info("    - source path not match mails  : %s" % stat.source_path_not_match_mails)
+        self.info("    - company mail size            : %0.2f MB" % (stat.company_mail_size / (1024 * 1024),))
+        self.info("    - company all mail count       : %s" % stat.user_all_mail_count)
+        self.info("    - company all mail size        : %0.2f MB" % (stat.user_all_mail_size / (1024 * 1024),))
         self.info("------------------------------------------------")
         self.info(" [Users]")
-        self.info("    - available_user_count         : %s" % stat.available_user_count)
-        self.info("    - empty_mail_box_user_count    : %s" % stat.empty_mail_box_user_count)
-        self.info("    - not_exist_user_in_pgsql      : %s" % stat.not_exist_user_in_pgsql)
-        self.info("    - not_exist_sqlite_db_user     : %s" % stat.not_exist_user_in_sqlite)
+        self.info("    - available user count         : %s" % stat.available_user_count)
+        self.info("    - empty mail box user count    : %s" % stat.empty_mail_box_user_count)
+        self.info("    - not exist user in pgsql      : %s" % stat.not_exist_user_in_pgsql)
+        self.info("    - not exist sqlite db user     : %s" % stat.not_exist_user_in_sqlite)
         self.info("------------------------------------------------")
         self.info(" [Hard-Link]")
-        self.info("    - hardlink_mail_count          : %s" % stat.company_hardlink_mail_count)
-        self.info("    - non_link_mail_count          : %s" % stat.company_non_link_mail_count)
-        self.info("    - mail_unique_count            : %s" % stat.company_hardlink_mail_unique_count)
-        self.info("    - hardlink_mail_size           : %0.2f MB" % (stat.company_hardlink_mail_size / (1024 * 1024)))
-        self.info("    - non_link_mail_size           : %0.2f MB" % (stat.company_non_link_mail_size / (1024 * 1024)))
-        self.info("    - hardlink_mail_unique_size    : %0.2f MB" % (stat.company_hardlink_mail_unique_size / (1024 * 1024)))
+        self.info("    - hardlink mail count          : %s" % stat.company_hardlink_mail_count)
+        self.info("    - non link mail count          : %s" % stat.company_non_link_mail_count)
+        self.info("    - mail unique count            : %s" % stat.company_hardlink_mail_unique_count)
+        self.info("    - hardlink mail size           : %0.2f MB" % (stat.company_hardlink_mail_size / (1024 * 1024)))
+        self.info("    - non link mail size           : %0.2f MB" % (stat.company_non_link_mail_size / (1024 * 1024)))
+        self.info("    - hardlink mail unique size    : %0.2f MB" % (stat.company_hardlink_mail_unique_size / (1024 * 1024)))
         self.info("------------------------------------------------")

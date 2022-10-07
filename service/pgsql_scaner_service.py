@@ -6,7 +6,7 @@ import time
 from typing import List, Dict, Union, Set, Tuple
 
 from models.company_models import Company, save_company_as_json
-from models.company_scan_statistic_models import ScanStatistic, update_statistic
+from models.company_scan_statistic_models import ScanStatistic, update_statistic, save_scan_stat_as_json
 from models.day_models import Days
 from models.mail_models import MailMessage
 from models.user_models import User
@@ -31,6 +31,7 @@ class PostgresqlSqlScanner:
         self.is_windows = is_windows()
         self.work_queue: Union[List[Tuple[Company, int]], None] = None
         self.lock = threading.Semaphore(1)
+        self.report_path = os.path.join(self.report.report_path, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
 
     def __pg_disconnect(self) -> None:
         if self.pg_conn is None:
@@ -246,7 +247,7 @@ class PostgresqlSqlScanner:
             company = self.__add_mail_count_info(company, days)
             company = self.__add_mail_inode_info(company)
             if len(company.users) != 0:
-                json_file_name = save_company_as_json(company, self.report.report_path)
+                json_file_name = save_company_as_json(company, self.report_path)
             self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
             update_statistic(stat, company)
 
@@ -268,7 +269,8 @@ class PostgresqlSqlScanner:
         company_counts = self.get_companies_count()
         end_day = self.setting_provider.date_range.end_day.strftime("%Y-%m-%d")
         start_day = self.setting_provider.date_range.start_day.strftime("%Y-%m-%d")
-        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day, self.setting_provider.date_range.start_day)
+        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day, self.setting_provider.date_range.start_day, self.report_path)
+        stat.add_logfile_name(self.logger.make_log_file_name())
 
         self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
@@ -278,7 +280,10 @@ class PostgresqlSqlScanner:
         for h_thread in h_threads:
             h_thread.join()
         stat.scan_end_at = datetime.datetime.now()
+        stat.add_logfile_name(self.logger.make_log_file_name())
         self.logger.companies_scan_complete_logging(stat)
+        save_scan_stat_as_json(stat, self.report_path)
+
 
     def find_company(self, days: Days, company_id: int = -1) -> List[Company]:
         where = ""

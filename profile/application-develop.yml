@@ -6,9 +6,11 @@ report:
 logging:
   log-path: D:\data\log
   file-log-level: INFO # DEBUG, MINOR, INFO, ERROR
-  stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
+  stdout-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
   max-logfile-size: 10240 # MB
 mail:
+  partition-capacity-threshold-ratio: 90
+  move-strategy: ROUND_ROBIN # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
   path:
     origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
     new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata

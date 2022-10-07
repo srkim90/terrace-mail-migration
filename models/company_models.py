@@ -57,6 +57,7 @@ class Company:
 
 
 def save_company_as_json(company: Company, save_path: str) -> str:
+    save_path = os.path.join(save_path, "companies")
     if os.path.exists(save_path) is False:
         os.makedirs(save_path)
     file_name = os.path.join(save_path, "company_report_%d_%d_%dMB.json" % (

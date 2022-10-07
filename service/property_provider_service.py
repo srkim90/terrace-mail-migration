@@ -5,6 +5,7 @@ from typing import List, Union
 from pydantic import BaseSettings
 from dependency_injector import containers, providers
 
+from enums.move_strategy_type import MoveStrategyType, move_strategy_type_converter
 from models.day_models import Days
 from service.logging_service import LoggingService
 from service.mail_file_checker_service import MailMessageFileChecker
@@ -25,9 +26,11 @@ class SystemSettings:
 
 
 class MailMoveSettings:
-    property = get_property()["mail"]["path"]
-    origin_mdata_path: List[str] = parser_dir_list(property["origin-mdata-path"])
-    new_mdata_path: List[str] = parser_dir_list(property["new-mdata-path"])
+    property = get_property()["mail"]
+    origin_mdata_path: List[str] = parser_dir_list(property["path"]["origin-mdata-path"])
+    new_mdata_path: List[str] = parser_dir_list(property["path"]["new-mdata-path"])
+    partition_capacity_threshold_ratio: int = int(property["partition-capacity-threshold-ratio"])
+    move_strategy: MoveStrategyType = move_strategy_type_converter(property["move-strategy"])
 
 
 class DateRangeSettings:

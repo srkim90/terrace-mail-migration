@@ -111,8 +111,15 @@ class SqliteConnector:
                                                                                        uid_no=uid_no,
                                                                                        message=new_full_path, ))
             return False
+
         eml_file_name = new_full_path.split("/")[-1]
+        if "\\" in eml_file_name: ## 윈도우 테스트 환경 일 경우 (윈도우 불편.. ㅠㅠ, 맥을 사달라!)
+            eml_file_name = eml_file_name.split("\\")[-1]
+
         if eml_file_name not in old_full_path:
+            self.logger.error("Error.  : %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                       uid_no=uid_no,
+                                                                                       message=new_full_path, ))
             return False
         old_ctime, old_ino, old_size = self.__check_eml_data(new_full_path)
         new_ctime, new_ino, new_size = self.__check_eml_data(old_full_path)
@@ -124,13 +131,22 @@ class SqliteConnector:
             return False
         return True
 
+    def __check_windows_dir(self, path: str):
+        if "\\" not in path:
+            return path
+        test_path = self.setting_provider.report.local_test_data_path
+        if test_path is not None:
+            return path.replace(test_path, "").replace("\\", "/")
+        return path
+
     def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str) -> bool:
         old_full_path = self.__get_mail_file_name_in_db(folder_no, uid_no)
         if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
             return False
         cur = self.conn.cursor()
-        cur.execute("update mail_message set full_path = %s from mail_message where folder_no = %d uid_no = %d" % (
-            new_full_path, folder_no, uid_no))
+        sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
+            self.__check_windows_dir(new_full_path), folder_no, uid_no)
+        cur.execute(sql)
         return True
 
     def get_target_mail_list(self, days: Days) -> List[MailMessage]:

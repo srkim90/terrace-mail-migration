@@ -15,11 +15,12 @@ class MailMessageFileChecker:
             self.report: ReportSettings = self.setting_provider.report
 
     def __make_mail_name(self, eml_path: str):
-        local_test_data_path = ""
-        if platform.system() == "Windows":
+        if platform.system() == "Windows" and ":" not in eml_path:
             eml_path = eml_path.replace("/", "\\")[1:]
             local_test_data_path = self.report.local_test_data_path
-        return os.path.join(local_test_data_path, eml_path)
+            return os.path.join(local_test_data_path, eml_path)
+        else:
+            return eml_path
 
     def check_file_status(self, eml_path: str) -> os.stat_result:
         self.__check_setting()

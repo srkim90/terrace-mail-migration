@@ -6,6 +6,8 @@ from typing import List
 
 import yaml as yaml
 
+from models.user_models import User
+
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -25,6 +27,16 @@ def mail_scanner_print_usage():
 def is_windows() -> bool:
     return "window" in platform.system().lower()
 
+
+def handle_userdata_if_windows(user: User, test_data_path: str):
+    if is_windows() is False or test_data_path is None:
+        return user
+    user.message_store = os.path.join(test_data_path, user.message_store.replace("/", "\\")[1:])
+    for message in user.messages:
+        message.full_path = os.path.join(test_data_path, message.full_path.replace("/", "\\")[1:])
+        for idx, link in enumerate(message.hardlinks):
+            message.hardlinks[idx] = os.path.join(test_data_path, message.hardlinks[idx].replace("/", "\\")[1:])
+    return user
 
 def parser_dir_list(paths: str) -> List[str]:
     parsed_path = []

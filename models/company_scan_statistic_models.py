@@ -9,6 +9,7 @@ from marshmallow import fields
 from models.company_models import Company
 from models.day_models import Days
 from models.user_models import User
+from utils.utills import get_property, parser_dir_list
 
 
 @dataclass_json
@@ -58,10 +59,19 @@ class ScanStatistic:
     available_company_count: int
     user_all_mail_count: int
     user_all_mail_size: int
+    report_save_path: str
+    log_file_names: List[str]
+    settings: dict
 
+    def add_logfile_name(self, log_file_name: str) -> None:
+        if log_file_name is None:
+            return
+        if log_file_name not in self.log_file_names:
+            self.log_file_names.append(log_file_name)
 
     @staticmethod
-    def get_empty_statistic(scan_end_date: datetime, scan_start_date: datetime):
+    def get_empty_statistic(scan_end_date: datetime, scan_start_date: datetime, report_save_path: str):
+        log_file_names: List[str] = []
         return ScanStatistic(
             counting_date_range=None,
             scan_start_at=datetime.now(),
@@ -85,7 +95,10 @@ class ScanStatistic:
             scan_end_date=scan_end_date,
             scan_start_date=scan_start_date,
             user_all_mail_count=0,
-            user_all_mail_size=0
+            user_all_mail_size=0,
+            report_save_path=report_save_path,
+            log_file_names=log_file_names,
+            settings={}
         )
 
 
@@ -109,3 +122,19 @@ def update_statistic(stat: ScanStatistic, company: Company):
     stat.company_count += 1
     if stat.available_user_count >= 1:
         stat.available_company_count += 1
+
+
+def save_scan_stat_as_json(stat: ScanStatistic, save_path: str) -> str:
+    if os.path.exists(save_path) is False:
+        os.makedirs(save_path)
+    prop: dict = get_property()
+    prop["mail"]["path"]["origin-mdata-path"] = parser_dir_list(prop["mail"]["path"]["origin-mdata-path"])
+    prop["mail"]["path"]["new-mdata-path"] = parser_dir_list(prop["mail"]["path"]["new-mdata-path"])
+    prop["database"]["postgresql"]["password"] = '*' * len(prop["database"]["postgresql"]["password"])
+    del (prop["date-range"])
+    stat.settings = prop
+    file_name = os.path.join(save_path, "scan_statistic_report.json")
+    json_data = ScanStatistic.to_json(stat, indent=4, ensure_ascii=False).encode("utf-8")
+    with open(file_name, "wb") as fd:
+        fd.write(json_data)
+    return file_name
