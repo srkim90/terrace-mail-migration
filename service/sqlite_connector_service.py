@@ -1,4 +1,3 @@
-import logging
 import os
 import sqlite3
 from typing import Tuple, List, Union
@@ -6,7 +5,7 @@ from typing import Tuple, List, Union
 from models.day_models import Days
 from models.mail_models import MailMessage
 from service.logging_service import LoggingService
-from service.property_provider_service import ApplicationSettings, ApplicationContainer
+from service.property_provider_service import ApplicationSettings, application_container
 
 
 class SqliteConnector:
@@ -15,28 +14,46 @@ class SqliteConnector:
     company_id: int
     user_id: int
     company_name: str
-    setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
-    mail_checker = ApplicationContainer().mail_file_checker()
-    logger: LoggingService = ApplicationContainer().logger()
+    setting_provider: ApplicationSettings = application_container.setting_provider
+    mail_checker = application_container.mail_file_checker
+    logger: LoggingService = application_container.logger
+    conn = None
+    mbackup_conn = None
 
     def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, readonly: bool = True) -> None:
         super().__init__()
-        self.conn = None
         self.readonly = readonly
         self.company_id = company_id
         self.user_id = user_id
         self.company_name = company_name
         self.db_path = db_path
+        self.conn = self.__db_conn(db_path, readonly)
+        self.mbackup_conn = None
+
+    def make_mbackup_conn(self) -> bool:
+        db_name: str = self.db_path.replace("_mcache.db", "_mbackup.db")
+        if os.path.exists(db_name) is False:
+            raise FileNotFoundError("not exist _mcache.db : %s" % (db_name,))
+        self.mbackup_conn = self.__db_conn(db_name, readonly=False)
+        return True
+
+    def __db_conn(self, db_path: str, readonly: bool = True):
         if os.path.exists(self.db_path) is False:
             self.logger.minor("Not found sqlite db : path=%s info=(%s)" % (self.db_path, self.__make_log_identify()))
             raise FileNotFoundError
         try:
             if readonly is True:
-                self.conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
+                conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
             else:
-                self.conn = sqlite3.connect('file:%s' % db_path, uri=True)
+                conn = sqlite3.connect('file:%s' % db_path, uri=True)
         except sqlite3.NotSupportedError as e:
-            self.conn = sqlite3.connect('%s' % db_path)
+            conn = sqlite3.connect('%s' % db_path)
+        return conn
+
+    def __query_execute(self, cur, query: str) -> None:
+        self.logger.debug("sqlite query execute : company_id=%d, user_id=%d, query='%s'" %
+                          (self.company_id, self.user_id, query,))
+        cur.execute(query)
 
     def __check_eml_data(self, full_path: str) -> (float, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(full_path)
@@ -56,10 +73,20 @@ class SqliteConnector:
     def __del__(self):
         self.disconnect()
 
+    def commit(self) -> bool:
+        if self.conn is not None:
+            self.conn.commit()
+        if self.mbackup_conn is not None:
+            self.mbackup_conn.commit()
+        return True
+
     def disconnect(self):
         if self.conn is not None:
             self.conn.close()
             self.conn = None
+        if self.mbackup_conn is not None:
+            self.mbackup_conn.close()
+            self.mbackup_conn = None
 
     def __make_where(self, days: Union[Days, None]):
         if days is None:
@@ -77,7 +104,7 @@ class SqliteConnector:
         size = 0
         count = 0
         cur = self.conn.cursor()
-        cur.execute("select count(*), sum(msg_size) from mail_message" + self.__make_where(days))
+        self.__query_execute(cur, "select count(*), sum(msg_size) from mail_message" + self.__make_where(days))
         for row in cur:
             count = row[0]
             size = row[1]
@@ -87,10 +114,13 @@ class SqliteConnector:
             size = 0
         return count, size
 
-    def __get_mail_file_name_in_db(self, folder_no: int, uid_no: int) -> Union[str, None]:
+    # def mail_message_exist(self, folder_no: int, uid_no: int) -> bool:
+    #     return False if self.__get_mail_file_name_in_db(folder_no, uid_no) is None else True
+
+    def get_mail_file_name_in_db(self, folder_no: int, uid_no: int) -> Union[str, None]:
         full_path = None
         cur = self.conn.cursor()
-        cur.execute(
+        self.__query_execute(cur,
             "select full_path from mail_message where folder_no = %d and uid_no = %d" % (folder_no, uid_no))
         for idx, row in enumerate(cur):
             full_path = row[0]
@@ -139,20 +169,32 @@ class SqliteConnector:
             return path.replace(test_path, "").replace("\\", "/")
         return path
 
-    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str) -> bool:
-        old_full_path = self.__get_mail_file_name_in_db(folder_no, uid_no)
+    def update_mbackup(self, folder_no: int, uid_no: int, new_full_path: str):
+        # _mbackup_conn = self.__db_conn(self.db_path.replace("_mcache.db", "_mbackup.db"), readonly=False)
+        cur = self.mbackup_conn.cursor()
+        sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
+            self.__check_windows_dir(new_full_path), folder_no, uid_no)
+        self.__query_execute(cur, sql)
+        cur.close()
+        # _mbackup_conn.commit()
+        # _mbackup_conn.close()
+        return
+
+
+    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str, old_full_path: str) -> bool:
         if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
             return False
         cur = self.conn.cursor()
         sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
             self.__check_windows_dir(new_full_path), folder_no, uid_no)
-        cur.execute(sql)
+        self.__query_execute(cur, sql)
+        cur.close()
         return True
 
     def get_target_mail_list(self, days: Days) -> List[MailMessage]:
         cur = self.conn.cursor()
         messages: List[MailMessage] = []
-        cur.execute(
+        self.__query_execute(cur,
             "select folder_no, uid_no, full_path, msg_size, msg_receive from mail_message" + self.__make_where(days))
         for row in cur:
             messages.append(MailMessage(

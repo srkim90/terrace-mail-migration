@@ -65,8 +65,8 @@ setting_provider = None
 def load_property():
     global setting_provider
     if setting_provider is None:
-        from service.property_provider_service import ApplicationSettings, ApplicationContainer, ReportSettings
-        setting_provider = ApplicationContainer().setting_provider()
+        from service.property_provider_service import application_container
+        setting_provider = application_container.setting_provider
     return setting_provider
 
 

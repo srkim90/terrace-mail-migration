@@ -3,12 +3,12 @@ from typing import List
 
 from models.company_models import Company, load_company_from_json
 from models.company_validation_models import CompanyValidationModels
-from service.property_provider_service import ApplicationContainer, ApplicationSettings, ReportSettings
+from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
 from utils.utills import make_data_file_path
 
 
 class ScanDataValidator:
-    setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
+    setting_provider: ApplicationSettings = application_container.setting_provider
 
     def __init__(self) -> None:
         super().__init__()

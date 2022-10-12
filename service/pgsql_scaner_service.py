@@ -12,15 +12,15 @@ from models.mail_models import MailMessage
 from models.user_models import User
 from service.logging_service import LoggingService
 from service.pgsql_connector_service import PostgresqlConnector
-from service.property_provider_service import ApplicationSettings, ApplicationContainer, ReportSettings
+from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
 from service.sqlite_connector_service import SqliteConnector
 from utils.utills import make_data_file_path, is_windows
 
 
 class PostgresqlSqlScanner:
-    logger: LoggingService = ApplicationContainer().logger()
-    setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
-    mail_checker = ApplicationContainer().mail_file_checker()
+    logger: LoggingService = application_container.logger
+    setting_provider: ApplicationSettings = application_container.setting_provider
+    mail_checker = application_container.mail_file_checker
     is_windows: bool
 
     def __init__(self) -> None:
@@ -142,16 +142,24 @@ class PostgresqlSqlScanner:
                 continue
 
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
+            new_messages: List[MailMessage] = []
             messages: List[MailMessage] = self.__mail_source_path_filter(user, sqlite.get_target_mail_list(days))
             user.user_mail_count = len(messages) # 타겟 경로 검사기능떄문에, 필터링 된 결과로 다시 계산 해줘야 한다.
             user.user_mail_size = 0
+
             for item in messages:
                 # step3 : 이메일 파일 하나하나 메타데이터 읽어 작성하는 메일 리스트에 업데이트 해준다.
-                item.st_ctime, item.st_ino, item.st_size = self.__check_eml_data(item)
+                try:
+                    item.st_ctime, item.st_ino, item.st_size = self.__check_eml_data(item)
+                except Exception as e:
+                    self.logger.debug("Error. Fail to check email file status : user-id=%d, file-name=%s, error=%s" %
+                                      (user.id, item.full_path, e))
+                    continue
                 company.company_mail_size += item.st_size
                 user.user_mail_size_in_db += item.st_size
                 user.user_mail_size += item.msg_size
-            user.messages = messages
+                new_messages.append(item)
+            user.messages = new_messages
 
             company.source_path_not_match_mails += user.source_path_not_match_mails
             company.company_mail_count += user.user_mail_count

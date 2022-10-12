@@ -6,7 +6,7 @@ report:
 logging:
   log-path: D:\data\log
   file-log-level: INFO # DEBUG, MINOR, INFO, ERROR
-  stdout-log-level: DEBUG # DEBUG, MINOR, INFO, ERROR
+  stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   max-logfile-size: 10240 # MB
 mail:
   partition-capacity-threshold-ratio: 90
@@ -14,6 +14,8 @@ mail:
   path:
     origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
     new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #origin-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
 database:
   postgresql:
     host: 172.22.1.103

@@ -9,6 +9,7 @@ from enums.move_strategy_type import MoveStrategyType, move_strategy_type_conver
 from models.day_models import Days
 from service.logging_service import LoggingService
 from service.mail_file_checker_service import MailMessageFileChecker
+from service.mail_migration_logging_service import MailMigrationLoggingService
 from utils.utills import get_property, parser_dir_list
 
 
@@ -70,7 +71,11 @@ class ApplicationSettings(BaseSettings):
     system: SystemSettings = SystemSettings()
 
 
-class ApplicationContainer(containers.DeclarativeContainer):
-    setting_provider = providers.Singleton(ApplicationSettings)
-    mail_file_checker = providers.Singleton(MailMessageFileChecker)
-    logger: LoggingService = providers.Singleton(LoggingService)
+class ApplicationContainer: # containers.DeclarativeContainer
+    setting_provider = ApplicationSettings() #providers.Singleton(ApplicationSettings)
+    mail_file_checker = MailMessageFileChecker() #providers.Singleton(MailMessageFileChecker)
+    logger: LoggingService = LoggingService() #providers.Singleton(LoggingService)
+    migration_logging = MailMigrationLoggingService() #MailMigrationLoggingService = providers.Singleton(MailMigrationLoggingService)
+
+
+application_container: ApplicationContainer = ApplicationContainer()

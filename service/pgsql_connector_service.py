@@ -5,12 +5,12 @@ import psycopg2 as psycopg2
 from dependency_injector import providers
 
 from service.logging_service import LoggingService
-from service.property_provider_service import ApplicationSettings, ApplicationContainer, DatabaseSettings
+from service.property_provider_service import ApplicationSettings, application_container, DatabaseSettings
 
 
 class PostgresqlConnector:
-    logger: LoggingService = ApplicationContainer().logger()
-    setting_provider: ApplicationSettings = ApplicationContainer().setting_provider()
+    logger: LoggingService = application_container.logger
+    setting_provider: ApplicationSettings = application_container.setting_provider
 
     def __init__(self) -> None:
         self.conn = None
