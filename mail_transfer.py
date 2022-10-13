@@ -44,18 +44,19 @@ def parser_list(value: str) -> Union[List[int], None]:
 def read_options() -> MigrationCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
-    parser.add_argument("-c", "--company-id", help="마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
+    parser.add_argument("-t", "--target-scan-date",
+                        help="(MANDATORY) 마이그레이션 수행 대상 데이터 파일 위치 (mail_scanner.py 의 결과 디렉토리)")
+    parser.add_argument("-c", "--company-id", help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
                                                    "마이그레이션 수행")
-    parser.add_argument("-u", "--user-id", help="마이그레이션 대상 사용자 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 사용자 대상으로 "
+    parser.add_argument("-u", "--user-id", help="(OPTIONAL) 마이그레이션 대상 사용자 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 사용자 대상으로 "
                                                 "마이그레이션 수행")
-    parser.add_argument("-t", "--target-scan-date", help="마이그레이션 수행 대상 데이터 파일 위치 (mail_scanner.py 의 결과 디렉토리)")
     try:
         opts = parser.parse_args(args)
         target_scan_date = opts.target_scan_date
         if target_scan_date is None and is_windows() is True:
             target_scan_date = test_date
         if target_scan_date is None:
-            raise FileNotFoundError
+            raise FileNotFoundError("마이그레이션 수행 대상 데이터 파일 위치가 지정 되지 않았습니다. ")
         return MigrationCommandOptions(
             target_company_ids=parser_list(opts.company_id),
             target_user_ids=parser_list(opts.user_id),
