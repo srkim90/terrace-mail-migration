@@ -1,5 +1,6 @@
 import logging
 
+from common_import import *
 from main.cmd.command_line_parser import read_migration_options
 from main.cmd.migration_command_option_models import MigrationCommandOptions
 from service.mail_migration_service import MailMigrationService
