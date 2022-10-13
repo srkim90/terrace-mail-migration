@@ -239,11 +239,11 @@ class MailMigrationService:
         self.migration_logging.inc_sqlite_db_close()
         return user_stat
 
-    def run(self, user_id: int = None):
+    def run(self, user_ids: Union[List[int], None] = None):
         self.logger.info("=====================================================")
         self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
         for idx, user in enumerate(self.company.users):
-            if user_id is not None and user.id != user_id:
+            if user_ids is not None and user.id not in user_ids:
                 continue
             self.company_stat.update_company_scan_result(
                 self.__handle_a_user(user)
