@@ -1,71 +1,23 @@
-import argparse
 import logging
-import sys
-from typing import List, Union
 
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
-
+from main.cmd.command_line_parser import read_migration_options
+from main.cmd.migration_command_option_models import MigrationCommandOptions
 from service.mail_migration_service import MailMigrationService
 from service.scan_data_provider import ScanDataProvider
-from utils.utills import is_windows
+from utils.utills import set_property_path
 
 log = logging.getLogger(__name__)
 
-test_date = "20221012_183946"
-
-
-@dataclass_json
-@dataclass
-class MigrationCommandOptions:
-    target_company_ids: Union[List[int], None]
-    target_user_ids: Union[List[int], None]
-    target_scan_date: Union[str, None]
+test_date = "20221012_183946"  # 윈도우에서만 유효!, 실전에선 명령행 파라미터로 받자!
 
 
 def main() -> None:
-    option: MigrationCommandOptions = read_options()
+    option: MigrationCommandOptions = read_migration_options(test_date)
     provider: ScanDataProvider = ScanDataProvider()
+    set_property_path(option.application_yml_path)
     for company in provider.get_company_report_data(option.target_scan_date, company_ids=option.target_company_ids):
         transfer = MailMigrationService(company)
         transfer.run(user_ids=option.target_user_ids)
-
-
-def parser_list(value: str) -> Union[List[int], None]:
-    result: List[int] = []
-    if type(value) is not str:
-        return None
-    values = value.strip().split(",")
-    for item in values:
-        result.append(int(item.strip()))
-    return result
-
-
-def read_options() -> MigrationCommandOptions:
-    args = sys.argv[1:]
-    parser = argparse.ArgumentParser(description="The parsing commands lists.")
-    parser.add_argument("-t", "--target-scan-date",
-                        help="(MANDATORY) 마이그레이션 수행 대상 데이터 파일 위치 (mail_scanner.py 의 결과 디렉토리)")
-    parser.add_argument("-c", "--company-id", help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
-                                                   "마이그레이션 수행")
-    parser.add_argument("-u", "--user-id", help="(OPTIONAL) 마이그레이션 대상 사용자 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 사용자 대상으로 "
-                                                "마이그레이션 수행")
-    try:
-        opts = parser.parse_args(args)
-        target_scan_date = opts.target_scan_date
-        if target_scan_date is None and is_windows() is True:
-            target_scan_date = test_date
-        if target_scan_date is None:
-            raise FileNotFoundError("마이그레이션 수행 대상 데이터 파일 위치가 지정 되지 않았습니다. ")
-        return MigrationCommandOptions(
-            target_company_ids=parser_list(opts.company_id),
-            target_user_ids=parser_list(opts.user_id),
-            target_scan_date=target_scan_date
-        )
-    except Exception as e:
-        print("Error : %s" % e)
-        parser.print_help()
-        exit()
 
 
 if __name__ == '__main__':

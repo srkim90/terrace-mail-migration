@@ -47,7 +47,7 @@ class PostgresqlSqlScanner:
             else:
                 conn = self.pg_conn
             result = conn.execute(query)
-            #conn.disconnect()
+            # conn.disconnect()
             return result
         except Exception as e:
             self.logger.error("Error. fail in postgresql query job: %s" % (e,))
@@ -144,7 +144,7 @@ class PostgresqlSqlScanner:
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
             new_messages: List[MailMessage] = []
             messages: List[MailMessage] = self.__mail_source_path_filter(user, sqlite.get_target_mail_list(days))
-            user.user_mail_count = len(messages) # 타겟 경로 검사기능떄문에, 필터링 된 결과로 다시 계산 해줘야 한다.
+            user.user_mail_count = len(messages)  # 타겟 경로 검사기능떄문에, 필터링 된 결과로 다시 계산 해줘야 한다.
             user.user_mail_size = 0
 
             for item in messages:
@@ -185,7 +185,7 @@ class PostgresqlSqlScanner:
                     if other_mail.full_path not in mail.hardlinks:
                         mail.hardlinks.append(other_mail.full_path)
                 mail.hardlink_count = len(mail.hardlinks)
-        #company객체에 통계 정보를 업데이트 해준다.
+        # company객체에 통계 정보를 업데이트 해준다.
         for inode in node_dict.keys():
             for idx, mail in enumerate(node_dict[inode]):
                 if mail.hardlink_count >= 2:
@@ -270,19 +270,19 @@ class PostgresqlSqlScanner:
             h_threads.append(h_thread)
         return h_threads
 
-
-
-    def report_user_and_company(self, days: Days, company_id: int = -1):
+    def report_user_and_company(self, days: Days, company_ids: Union[List[int], None] = None):
         user_counts = self.get_users_count()
         company_counts = self.get_companies_count()
         end_day = self.setting_provider.date_range.end_day.strftime("%Y-%m-%d")
         start_day = self.setting_provider.date_range.start_day.strftime("%Y-%m-%d")
-        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day, self.setting_provider.date_range.start_day, self.report_path)
+        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day,
+                                                                self.setting_provider.date_range.start_day,
+                                                                self.report_path)
         stat.add_logfile_name(self.logger.make_log_file_name())
 
         self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
-        for idx, company in enumerate(self.find_company(days, company_id)):
+        for idx, company in enumerate(self.find_company(days, company_ids)):
             self.__enqueue(company, idx)
         self.__wait_for_processing()
         for h_thread in h_threads:
@@ -292,11 +292,14 @@ class PostgresqlSqlScanner:
         self.logger.companies_scan_complete_logging(stat)
         save_scan_stat_as_json(stat, self.report_path)
 
-
-    def find_company(self, days: Days, company_id: int = -1) -> List[Company]:
+    def find_company(self, days: Days, company_ids: Union[List[int], None] = None) -> List[Company]:
         where = ""
-        if company_id >= 0:
-            where = " where id = %d" % (company_id,)
+        if company_ids is not None:
+            where = " where "
+            for idx, company_id in enumerate(company_ids):
+                if idx != 0:
+                    where += " or "
+                where += " id = %d" % (company_id,)
         query = "select id, created_at, updated_at, domain_name, name, online_user_count, stop_user_count, user_count, wait_user_count, site_url, uuid, mail_domain_seq, company_group_id, manager_id from go_companies" + where
         companies: List[Company] = []
         for row in self.__execute_query(query):

@@ -38,6 +38,7 @@ def handle_userdata_if_windows(user: User, test_data_path: str):
             message.hardlinks[idx] = os.path.join(test_data_path, message.hardlinks[idx].replace("/", "\\")[1:])
     return user
 
+
 def parser_dir_list(paths: str) -> List[str]:
     parsed_path = []
     for path in paths.split(","):
@@ -49,12 +50,24 @@ def parser_dir_list(paths: str) -> List[str]:
     return parsed_path
 
 
+g_property_path: str = ""
+
+
+def set_property_path(property_path: str) -> None:
+    global g_property_path
+    if type(property_path) is str:
+        g_property_path = property_path
+
+
 def get_property() -> dict:
+    if g_property_path is not None and len(g_property_path) > 0:
+        return yaml.safe_load(open(g_property_path, encoding="utf-8"))
     base_dir_list = ["", "..",
                      os.path.join("opt", "mail_transfer"),
                      os.path.join("opt", "mail-migration"),
                      os.path.join("opt", "mail_migration"),
-                     os.path.join("opt", "mail-transfer")
+                     os.path.join("opt", "mail-transfer"),
+                     os.path.join("opt", "terrace-mail-migration")
                      ]
     profile_path = "profile"
     profile_name = "application.yml"
