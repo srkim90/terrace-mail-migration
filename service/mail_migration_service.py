@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import platform
@@ -5,9 +6,13 @@ import random
 import shutil
 from typing import Union, Tuple, List
 
+from enums.migration_result_type import UserMigrationResultType, MailMigrationResultType
 from enums.move_strategy_type import MoveStrategyType
+from models.company_migration_result_models import CompanyMigrationResult, save_company_migration_report_as_json
 from models.company_models import Company
+from models.mail_migration_result_models import MailMigrationResult
 from models.mail_models import MailMessage
+from models.user_migration_result_models import UserMigrationResult
 from models.user_models import User
 from service.logging_service import LoggingService
 from service.mail_migration_logging_service import MailMigrationLoggingService
@@ -23,6 +28,7 @@ class MailMigrationService:
     logger: LoggingService = application_container.logger
     migration_logging: MailMigrationLoggingService = application_container.migration_logging
     setting_provider: ApplicationSettings = application_container.setting_provider
+    company_stat: CompanyMigrationResult
 
     def __init__(self, company: Company) -> None:
         super().__init__()
@@ -31,6 +37,29 @@ class MailMigrationService:
         self.dir_separator = "\\" if self.__is_windows() else "/"
         self.move_setting = self.setting_provider.move_setting
         self.migration_logging.start_stat()
+        self.company_stat = self.__init_statistic()
+
+    def __init_statistic(self) -> CompanyMigrationResult:
+        return CompanyMigrationResult(
+            id=self.company.id,
+            counting_date_range=self.company.counting_date_range,
+            start_at=datetime.datetime.now(),
+            end_at=None,
+            time_consuming=None,
+            domain_name=self.company.domain_name,
+            name=self.company.name,
+            site_url=self.company.site_url,
+            n_migration_user_target=len(self.company.users),
+            n_migration_user_success=0,
+            n_migration_user_fail=0,
+            n_migration_mail_target=self.company.user_all_mail_count,
+            n_migration_mail_success=0,
+            n_migration_mail_fail=0,
+            user_result_type_classify={},
+            mail_result_type_classify={},
+            company_mail_size=self.company.company_mail_size,
+            results=[]
+        )
 
     def __is_windows(self) -> bool:
         if self.is_window is not None:
@@ -116,53 +145,75 @@ class MailMigrationService:
             log_identify += " : %s" % message
         return log_identify
 
-    def __move_a_file(self, user: User, mail: MailMessage, sqlite: SqliteConnector) -> Tuple[bool, Union[str, None]]:
+    def __move_a_file(self, user: User, mail: MailMessage, sqlite: SqliteConnector) -> Tuple[bool, Union[str, None], Union[str, None], MailMigrationResultType]:
         old_full_path = sqlite.get_mail_file_name_in_db(mail.folder_no, mail.uid_no)
         if old_full_path is None:
             self.migration_logging.inc_migration_fail_already_removed()
-            return False, None
+            return False, None, None, MailMigrationResultType.ALREADY_REMOVED
         org_full_path = mail.full_path
         new_full_path = self.__copy_mail_file(org_full_path)
         if new_full_path is None:
             self.migration_logging.inc_migration_fail_invalid_new_directory()
             self.logger.minor("Fail to create new mail file: %s" % self.__make_log_identify(user))
-            return False, None
+            return False, None, None, MailMigrationResultType.NOT_EXIST_MOVE_TARGET_DIR
         self.migration_logging.inc_sqlite_update_query()
         result = sqlite.update_mail_path(mail.folder_no, mail.uid_no, new_full_path, old_full_path)
         if result is False:
             os.remove(new_full_path)
             self.migration_logging.inc_migration_fail_sqlite_db_update_fail()
             self.migration_logging.inc_mail_delete_as_fail()
-            return False, None
+            return False, None, None, MailMigrationResultType.SQLITE_M_BACKUP_DB_UPDATE_FAIL
         else:
             #os.remove(org_full_path)
             sqlite.update_mbackup(mail.folder_no, mail.uid_no, new_full_path)
             self.migration_logging.inc_mail_delete()
-            return True, org_full_path
+            return True, org_full_path, new_full_path, MailMigrationResultType.SUCCESS
 
-    def __handle_a_user(self, user: User) -> bool:
+    @staticmethod
+    def __init_user_statistic(user: User) -> UserMigrationResult:
+        return UserMigrationResult(
+            id=user.id,
+            start_at=datetime.datetime.now(),
+            end_at=None,
+            name=user.name,
+            message_store=user.message_store,
+            time_consuming=None,
+            n_migration_mail_target=len(user.messages),
+            n_migration_mail_success=0,
+            n_migration_mail_fail=0,
+            result=UserMigrationResultType.SUCCESS,
+            mail_migration_result_details=[],
+            mail_migration_result_type_classify={},
+            time_commit_consuming=None,
+            commit_start_at=None,
+            commit_end_at=None,
+        )
+
+    def __handle_a_user(self, user: User) -> UserMigrationResult:
+        user_stat = self.__init_user_statistic(user)
         company = self.company
         old_mails_to_delete: List[str] = []
         user = handle_userdata_if_windows(user, self.setting_provider.report.local_test_data_path)
         self.logger.minor("start user mail transfer: %s" % self.__make_log_identify(user))
         try:
             sqlite_db_file_name = os.path.join(user.message_store, "_mcache.db")
-            conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name,
-                                     readonly=False)
+            conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=False)
             conn.make_mbackup_conn()
             self.migration_logging.inc_sqlite_db_open()
         except Exception as e:
             self.logger.error("start user mail transfer error: %s, error-message=%s"
                               % (self.__make_log_identify(user), e))
-            return False
+            return user_stat
 
         for idx, mail in enumerate(user.messages):
             is_success = False
             delete_mail_path = None
             self.migration_logging.inc_migration_try()
+            result_type = MailMigrationResultType.UNEXPECTED_ERROR
+            new_mail_path = None
 
             try:
-                is_success, delete_mail_path = self.__move_a_file(user, mail, conn)
+                is_success, delete_mail_path, new_mail_path, result_type = self.__move_a_file(user, mail, conn)
             except Exception as e:
                 self.logger.error(
                     "Error. fail in __move_a_file : uid=%d, company_id=%d, mail_uid_no=%d, folder_no=%d, e=%s"
@@ -173,12 +224,20 @@ class MailMigrationService:
                 old_mails_to_delete.append(delete_mail_path)
             else:
                 self.migration_logging.inc_migration_fail()
+            user_stat.update_mail_migration_result(
+                MailMigrationResult.builder(mail, result_type, new_mail_path)
+            )
+        user_stat.commit_start_at = datetime.datetime.now()
         if conn.commit() is True:
+            user_stat.commit_end_at = datetime.datetime.now()
             for old_mail in old_mails_to_delete:
                 os.remove(old_mail)
+        else:
+            user_stat.commit_end_at = datetime.datetime.now()
         conn.disconnect()
+        user_stat.terminate_user_scan()
         self.migration_logging.inc_sqlite_db_close()
-        return True
+        return user_stat
 
     def run(self, user_id: int = None):
         self.logger.info("=====================================================")
@@ -186,7 +245,11 @@ class MailMigrationService:
         for idx, user in enumerate(self.company.users):
             if user_id is not None and user.id != user_id:
                 continue
-            self.__handle_a_user(user)
+            self.company_stat.update_company_scan_result(
+                self.__handle_a_user(user)
+            )
+        self.company_stat.terminate_company_scan()
+        save_company_migration_report_as_json(self.company_stat, self.setting_provider.report.migration_result)
         self.logger.info("=====================================================")
         self.logger.info("end company mail transfer: %s" % self.__make_log_identify())
         self.logger.info("=====================================================")

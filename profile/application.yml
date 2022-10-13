@@ -2,6 +2,7 @@ system:
   max-work-threads: 12
 report:
   report-path: /opt/mail-migration-data/report
+  migration-result: /opt/mail-migration-data/migration-result
 logging:
   log-path: /opt/mail-migration-data/log
   file-log-level: INFO # DEBUG, MINOR, INFO, ERROR

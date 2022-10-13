@@ -57,6 +57,7 @@ class DateRangeSettings:
 class ReportSettings(BaseSettings):
     property = get_property()["report"]
     report_path: str = property["report-path"]
+    migration_result: str = property["migration-result"]
     if "local-test-data-path" in property.keys():
         local_test_data_path: str = property["local-test-data-path"]
     else:
