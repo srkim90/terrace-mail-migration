@@ -2,7 +2,7 @@ import logging
 
 import sys
 
-sys.path.append("./binary/Python-minimum/site-packages")
+#sys.path.append("../binary/Python-minimum/site-packages")
 
 from service.pgsql_scaner_service import PostgresqlSqlScanner
 from service.property_provider_service import ApplicationSettings, application_container

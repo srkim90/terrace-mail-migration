@@ -19,7 +19,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 def mail_scanner_print_usage():
-    with open("./README.txt", encoding="utf-8") as fd:
+    with open("./README.md", encoding="utf-8") as fd:
         info = fd.read()
     print(info)
 
@@ -50,13 +50,21 @@ def parser_dir_list(paths: str) -> List[str]:
 
 
 def get_property() -> dict:
+    base_dir_list = ["", "..",
+                     os.path.join("opt", "mail_transfer"),
+                     os.path.join("opt", "mail-migration"),
+                     os.path.join("opt", "mail_migration"),
+                     os.path.join("opt", "mail-transfer")
+                     ]
     profile_path = "profile"
     profile_name = "application.yml"
     if is_windows() is True:
         profile_name = "application-develop.yml"
-    common_config_file = os.path.join(profile_path, profile_name)
-    common_config: dict = yaml.safe_load(open(common_config_file, encoding="utf-8"))
-    return common_config
+    for base_dir in base_dir_list:
+        common_config_file = os.path.join(base_dir, profile_path, profile_name)
+        if os.path.exists(common_config_file) is True:
+            return yaml.safe_load(open(common_config_file, encoding="utf-8"))
+    raise FileNotFoundError("application.yml 파일을 찾을 수 없습니다.")
 
 
 setting_provider = None
