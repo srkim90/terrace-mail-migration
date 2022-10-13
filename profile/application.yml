@@ -12,9 +12,7 @@ mail:
   partition-capacity-threshold-ratio: 90
   move-strategy: ROUND_ROBIN # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
   path:
-    origin-mdata-path:
-    #new-mdata-path:
-    "
+    origin-mdata-path: "
                       /data/mdata,
                       /data/mdata2,
                       /data/mdata3,
@@ -22,9 +20,7 @@ mail:
                       /data/mdata5,
                       /data/mdata6
     "
-    new-mdata-path:
-    #origin-mdata-path:
-    "
+    new-mdata-path: "
                     /data/new_mdata/mdata10,
                     /data/new_mdata/mdata11,
                     /data/new_mdata/mdata12,

@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from typing import Union, List
 
@@ -8,9 +9,20 @@ from main.cmd.scan_command_option_models import ScanCommandOptions
 from utils.utills import is_windows
 
 
+def validate_application_yml_path(yml_file_name: str) -> None:
+    if yml_file_name is None:
+        return
+    if os.path.exists(yml_file_name) is False:
+        print("입력한 application.yml 파일이 존재하지 않습니다")
+        exit()
+
+
 def parser_list(value: str) -> Union[List[int], None]:
+    null_list = ["null", "none", "empty", "no", "n", "not"]
     result: List[int] = []
     if type(value) is not str:
+        return None
+    if value.lower() in null_list:
         return None
     values = value.strip().split(",")
     for item in values:
@@ -28,6 +40,7 @@ def read_scan_options() -> ScanCommandOptions:
                              "마이그레이션 수행")
     try:
         opts = parser.parse_args(args)
+        validate_application_yml_path(opts.application_yml_path)
         return ScanCommandOptions(
             application_yml_path=opts.application_yml_path,
             target_company_ids=parser_list(opts.company_id)
@@ -58,6 +71,7 @@ def read_migration_options(test_date: str = Union[None, str]) -> MigrationComman
             target_scan_date = test_date
         if target_scan_date is None:
             raise FileNotFoundError("마이그레이션 수행 대상 데이터 파일 위치가 지정 되지 않았습니다. ")
+        validate_application_yml_path(opts.application_yml_path)
         return MigrationCommandOptions(
             target_company_ids=parser_list(opts.company_id),
             target_user_ids=parser_list(opts.user_id),
