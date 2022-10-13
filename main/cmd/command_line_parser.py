@@ -10,8 +10,11 @@ from utils.utills import is_windows
 
 
 def validate_application_yml_path(yml_file_name: str) -> None:
+    null_list = ["null", "none", "empty", "no", "n", "not"]
     if yml_file_name is None:
         return
+    if yml_file_name.lower() in null_list:
+        return None
     if os.path.exists(yml_file_name) is False:
         print("입력한 application.yml 파일이 존재하지 않습니다")
         exit()
@@ -19,10 +22,10 @@ def validate_application_yml_path(yml_file_name: str) -> None:
 
 def parser_list(value: str) -> Union[List[int], None]:
     null_list = ["null", "none", "empty", "no", "n", "not"]
+    if value.lower() in null_list:
+        return None
     result: List[int] = []
     if type(value) is not str:
-        return None
-    if value.lower() in null_list:
         return None
     values = value.strip().split(",")
     for item in values:
