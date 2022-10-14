@@ -278,15 +278,15 @@ class PostgresqlSqlScanner:
         if days is None and is_windows() is True:
             days = self.setting_provider.date_range
         if days is not None and (days.end_day is not None):
-            end_day = days.end_day.strftime("%Y-%m-%d")
+            end_day = days.end_day
             if days.start_day is not None:
-                start_day = days.start_day.strftime("%Y-%m-%d")
+                start_day = days.start_day
         stat: ScanStatistic = ScanStatistic.get_empty_statistic(end_day,
                                                                 start_day,
                                                                 self.report_path)
         stat.add_logfile_name(self.logger.make_log_file_name())
 
-        self.logger.companies_scan_start_up_logging(end_day, start_day, user_counts, company_counts)
+        self.logger.companies_scan_start_up_logging(end_day.strftime("%Y-%m-%d"), start_day.strftime("%Y-%m-%d"), user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
             self.__enqueue(company, idx)
