@@ -1,10 +1,12 @@
 import argparse
+import datetime
 import os
 import sys
 from typing import Union, List
 
 from main.cmd.migration_command_option_models import MigrationCommandOptions
 from main.cmd.scan_command_option_models import ScanCommandOptions
+from models.day_models import Days
 
 from utils.utills import is_windows
 
@@ -35,6 +37,26 @@ def parser_list(value: Union[str, None]) -> Union[List[int], None]:
     return result
 
 
+def print_help(parser: argparse.ArgumentParser):
+    help_str = ["-h", "help", "--help", "-v", "--version", "ver", "-ver", "--ver", "version"]
+    args = sys.argv[1:]
+    if len(args) == 0:
+        return
+    if args[0] in help_str:
+        parser.print_help()
+        exit(0)
+
+
+def read_date(date_str: str) -> Union[None, datetime.datetime]:
+    check_format = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d_%H:%M:%S", "%Y%m%d_%H%M%S", "%Y%m%d %H%M%S", "%Y-%m-%dT%H:%M:%S",
+                    "%Y%m%d", "%Y-%m-%d", "%Y.%m.%d"]
+    for __format in check_format:
+        try:
+            return datetime.datetime.strptime(date_str, __format)
+        except Exception as e:
+            pass
+    return None
+
 def read_scan_options() -> ScanCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
@@ -43,11 +65,23 @@ def read_scan_options() -> ScanCommandOptions:
     parser.add_argument("-c", "--company-id",
                         help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
                              "마이그레이션 수행")
+    parser.add_argument("-s", "--start-day",
+                        help="(OPTIONAL) 스캔 시작 일자")
+    parser.add_argument("-e", "--end-day",
+                        help="(OPTIONAL) 스캔 종료 일자")
+    print_help(parser)
     try:
+        scan_range = None
         opts = parser.parse_args(args)
+        end_day = opts.end_day
+        start_day = opts.start_day
+        if end_day is not None:
+            scan_range = Days(read_date(start_day), read_date(end_day))
+
         return ScanCommandOptions(
             application_yml_path=validate_application_yml_path(opts.application_yml_path),
-            target_company_ids=parser_list(opts.company_id)
+            target_company_ids=parser_list(opts.company_id),
+            scan_range=scan_range
         )
     except Exception as e:
         print("Error : %s" % e)

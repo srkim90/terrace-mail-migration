@@ -273,8 +273,10 @@ class PostgresqlSqlScanner:
     def report_user_and_company(self, days: Days, company_ids: Union[List[int], None] = None):
         user_counts = self.get_users_count()
         company_counts = self.get_companies_count()
-        end_day = self.setting_provider.date_range.end_day.strftime("%Y-%m-%d")
-        start_day = self.setting_provider.date_range.start_day.strftime("%Y-%m-%d")
+        if days is None:
+            days = self.setting_provider
+        end_day = days.end_day.strftime("%Y-%m-%d")
+        start_day = days.start_day.strftime("%Y-%m-%d")
         stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day,
                                                                 self.setting_provider.date_range.start_day,
                                                                 self.report_path)
