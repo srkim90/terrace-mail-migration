@@ -12,7 +12,7 @@ from models.mail_models import MailMessage
 @dataclass_json
 @dataclass
 class MailMigrationResult:
-    created_at: datetime = field(
+    created_at: Union[datetime, None] = field(
         metadata=config(
             encoder=datetime.isoformat,
             decoder=datetime.fromisoformat,

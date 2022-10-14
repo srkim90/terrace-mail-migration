@@ -16,13 +16,13 @@ from models.user_migration_result_models import UserMigrationResult
 class CompanyMigrationResult:
     id: int
     counting_date_range: Days
-    start_at: datetime = field(
+    start_at: Union[datetime, None] = field(
         metadata=config(
             encoder=datetime.isoformat,
             decoder=datetime.fromisoformat,
             mm_field=fields.DateTime(format='iso')
         ))
-    end_at: datetime = field(
+    end_at: Union[datetime, None] = field(
         metadata=config(
             encoder=datetime.isoformat,
             decoder=datetime.fromisoformat,
