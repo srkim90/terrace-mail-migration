@@ -2,7 +2,7 @@ import dataclasses, json
 import datetime
 import os
 import platform
-from typing import List
+from typing import List, Union
 
 import yaml as yaml
 
@@ -50,7 +50,7 @@ def parser_dir_list(paths: str) -> List[str]:
     return parsed_path
 
 
-g_property_path: str = ""
+g_property_path: Union[str, None] = None
 
 
 def set_property_path(property_path: str) -> None:
@@ -60,6 +60,7 @@ def set_property_path(property_path: str) -> None:
 
 
 def get_property() -> dict:
+    global g_property_path
     if g_property_path is not None and len(g_property_path) > 0:
         return yaml.safe_load(open(g_property_path, encoding="utf-8"))
     base_dir_list = ["", "..",
