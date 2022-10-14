@@ -130,7 +130,8 @@ def save_scan_stat_as_json(stat: ScanStatistic, save_path: str) -> str:
     prop["mail"]["path"]["origin-mdata-path"] = parser_dir_list(prop["mail"]["path"]["origin-mdata-path"])
     prop["mail"]["path"]["new-mdata-path"] = parser_dir_list(prop["mail"]["path"]["new-mdata-path"])
     prop["database"]["postgresql"]["password"] = '*' * len(prop["database"]["postgresql"]["password"])
-    del (prop["date-range"])
+    if "date-range" in prop.keys():
+        del (prop["date-range"])
     stat.settings = prop
     file_name = os.path.join(save_path, "scan_statistic_report.json")
     json_data = ScanStatistic.to_json(stat, indent=4, ensure_ascii=False).encode("utf-8")
