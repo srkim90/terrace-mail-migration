@@ -45,9 +45,8 @@ def read_scan_options() -> ScanCommandOptions:
                              "마이그레이션 수행")
     try:
         opts = parser.parse_args(args)
-        validate_application_yml_path(opts.application_yml_path)
         return ScanCommandOptions(
-            application_yml_path=opts.application_yml_path,
+            application_yml_path=validate_application_yml_path(opts.application_yml_path),
             target_company_ids=parser_list(opts.company_id)
         )
     except Exception as e:
