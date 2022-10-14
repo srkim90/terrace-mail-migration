@@ -23,7 +23,7 @@ class PostgresqlSqlScanner:
     mail_checker = application_container.mail_file_checker
     is_windows: bool
 
-    def __init__(self) -> None:
+    def __init__(self, report_path: Union[str, None] = None) -> None:
         super().__init__()
         self.report: ReportSettings = self.setting_provider.report
         self.logger.info("PostgresqlScanner start up")
@@ -31,7 +31,16 @@ class PostgresqlSqlScanner:
         self.is_windows = is_windows()
         self.work_queue: Union[List[Tuple[Company, int]], None] = None
         self.lock = threading.Semaphore(1)
-        self.report_path = os.path.join(self.report.report_path, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+        self.report_path = self.__select_report_path(report_path)
+
+    def __select_report_path(self, report_path: Union[str, None]) -> str:
+        if type(report_path) is not str:
+            report_path = os.path.join(self.report.report_path, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+        if "/" not in report_path and "\\" not in report_path:
+            report_path = os.path.join(self.report.report_path, report_path)
+        if os.path.exists(report_path) is False:
+            os.makedirs(report_path)
+        return report_path
 
     def __pg_disconnect(self) -> None:
         if self.pg_conn is None:

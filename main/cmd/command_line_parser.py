@@ -57,6 +57,7 @@ def read_date(date_str: str) -> Union[None, datetime.datetime]:
             pass
     return None
 
+
 def read_scan_options() -> ScanCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
@@ -69,6 +70,8 @@ def read_scan_options() -> ScanCommandOptions:
                         help="(OPTIONAL) 스캔 시작 일자")
     parser.add_argument("-e", "--end-day",
                         help="(OPTIONAL) 스캔 종료 일자")
+    parser.add_argument("-d", "--scan-data-save-directory",
+                        help="(OPTIONAL) 스캔 결과를 저장하는 디렉토리 지정, 입력하지 않을 경우 자동 생성")
     print_help(parser)
     try:
         scan_range = None
@@ -81,7 +84,8 @@ def read_scan_options() -> ScanCommandOptions:
         return ScanCommandOptions(
             application_yml_path=validate_application_yml_path(opts.application_yml_path),
             target_company_ids=parser_list(opts.company_id),
-            scan_range=scan_range
+            scan_range=scan_range,
+            scan_data_save_dir=opts.scan_data_save_directory
         )
     except Exception as e:
         print("Error : %s" % e)

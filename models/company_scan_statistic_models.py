@@ -8,7 +8,6 @@ from marshmallow import fields
 
 from models.company_models import Company
 from models.day_models import Days
-from models.user_models import User
 from utils.utills import get_property, parser_dir_list
 
 

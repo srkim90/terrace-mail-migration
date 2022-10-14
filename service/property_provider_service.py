@@ -35,7 +35,13 @@ class MailMoveSettings:
 
 
 class DateRangeSettings:
-    property = get_property()["date-range"]
+    try:
+        property = get_property()["date-range"]
+    except KeyError:
+        property = {
+            "start-day": None,
+            "end-day": None
+        }
     try:
         start_day: Union[datetime.datetime, None] = property["start-day"]
     except TypeError as e:
