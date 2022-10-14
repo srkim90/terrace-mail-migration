@@ -189,7 +189,8 @@ class LoggingService:
         prop["mail"]["path"]["origin-mdata-path"] = parser_dir_list(prop["mail"]["path"]["origin-mdata-path"])
         prop["mail"]["path"]["new-mdata-path"] = parser_dir_list(prop["mail"]["path"]["new-mdata-path"])
         prop["database"]["postgresql"]["password"] = '*' * len(prop["database"]["postgresql"]["password"])
-        del(prop["date-range"])
+        if "date-range" in prop.keys():
+            del(prop["date-range"])
         setting_json = json.dumps(prop, indent=4, ensure_ascii=False)
         self.info("====== START SCAN FOR MAIL DATA MIGRATION ======")
         self.info("------------------------------------------------")
