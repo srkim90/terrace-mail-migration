@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 
 def main() -> None:
     option: ScanCommandOptions = read_scan_options()
-    set_property_path(option.application_yml_path)
     psql = PostgresqlSqlScanner(option.scan_data_save_dir)
     psql.report_user_and_company(option.scan_range, option.target_company_ids)
 

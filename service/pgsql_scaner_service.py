@@ -285,7 +285,7 @@ class PostgresqlSqlScanner:
         user_counts = self.get_users_count()
         company_counts = self.get_companies_count()
         if days is None and is_windows() is True:
-            days = self.setting_provider.date_range
+            days = self.setting_provider.date_range.date_range
         if days is not None and (days.end_day is not None):
             end_day = days.end_day
             if days.start_day is not None:

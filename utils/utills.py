@@ -1,3 +1,5 @@
+import sys
+
 import dataclasses, json
 import datetime
 import os
@@ -53,13 +55,28 @@ def parser_dir_list(paths: str) -> List[str]:
 g_property_path: Union[str, None] = None
 
 
+def check_property_options():
+    for item in sys.argv[1:]:
+        if "--application-yml-path" in item:
+            application_yml_path=item.split("=")[-1].strip()
+            set_property_path(application_yml_path)
+            break
+
+
 def set_property_path(property_path: str) -> None:
     global g_property_path
     if type(property_path) is str:
         g_property_path = property_path
 
 
+g_checked = False
+
+
 def get_property() -> dict:
+    global g_checked
+    if g_checked is False:
+        g_checked = True
+        check_property_options()
     global g_property_path
     if g_property_path is not None and len(g_property_path) > 0:
         return yaml.safe_load(open(g_property_path, encoding="utf-8"))
