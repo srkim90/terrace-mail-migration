@@ -9,10 +9,10 @@ from main.cmd.scan_command_option_models import ScanCommandOptions
 from utils.utills import is_windows
 
 
-def validate_application_yml_path(yml_file_name: str) -> None:
+def validate_application_yml_path(yml_file_name: Union[str, None]) -> None:
     null_list = ["null", "none", "empty", "no", "n", "not"]
     if yml_file_name is None:
-        return
+        return None
     if yml_file_name.lower() in null_list:
         return None
     if os.path.exists(yml_file_name) is False:
@@ -20,8 +20,10 @@ def validate_application_yml_path(yml_file_name: str) -> None:
         exit()
 
 
-def parser_list(value: str) -> Union[List[int], None]:
+def parser_list(value: Union[str, None]) -> Union[List[int], None]:
     null_list = ["null", "none", "empty", "no", "n", "not"]
+    if value is None:
+        return None
     if value.lower() in null_list:
         return None
     result: List[int] = []
