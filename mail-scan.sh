@@ -30,6 +30,12 @@ print_help() {
 
 }
 
+check_env() {
+    if [ "$__YML_PATH" != "" ]; then
+        YML_PATH=$__YML_PATH
+    fi
+}
+
 execute_python() {
     $PYTHON ${BASE_DIR}/main/mail_scanner.py $@
 }
@@ -41,11 +47,14 @@ init() {
 
 main() {
     init
+    check_env
+
     ### HELP 출력
     if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         print_help
         return
     fi
+    echo "path of yml file : ${YML_PATH}"
     if [ "$1" == "" ]; then
         execute_python
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" == "" ]; then

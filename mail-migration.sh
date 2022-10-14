@@ -30,6 +30,12 @@ print_help() {
 
 }
 
+check_env() {
+    if [ "$__YML_PATH" != "" ]; then
+        YML_PATH=$__YML_PATH
+    fi
+}
+
 execute_python() {
     $PYTHON ${BASE_DIR}/main/mail_transfer.py $@
 }
@@ -41,23 +47,26 @@ init() {
 
 main() {
     init
+    check_env
+
     ### HELP 출력
     if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
         print_help
         return
     fi
+    echo "path of yml file : ${YML_PATH}"
     if [ "$1" != "" ] && [ "$2" == "" ]; then
         TARGET_SCAN_DATE=${1}
-        execute_python --application-yml-path=$YML_PATH $TARGET_SCAN_DATE --target-scan-date=$TARGET_SCAN_DATE
+        execute_python --application-yml-path=$YML_PATH --target-scan-date=$TARGET_SCAN_DATE
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" == "" ]; then
         COMPANY_ID="--company-id=${2}"
         TARGET_SCAN_DATE=${1}
-        execute_python --application-yml-path=$YML_PATH $TARGET_SCAN_DATE --target-scan-date=$TARGET_SCAN_DATE $COMPANY_ID
+        execute_python --application-yml-path=$YML_PATH --target-scan-date=$TARGET_SCAN_DATE $COMPANY_ID
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" != "" ]; then
-        USER_ID="--company-id=${3}"
+        USER_ID="--user-id=${3}"
         COMPANY_ID="--company-id=${2}"
         TARGET_SCAN_DATE=${1}
-        execute_python --application-yml-path=$YML_PATH $TARGET_SCAN_DATE --target-scan-date=$TARGET_SCAN_DATE $USER_ID $COMPANY_ID
+        execute_python --application-yml-path=$YML_PATH --target-scan-date=$TARGET_SCAN_DATE $USER_ID $COMPANY_ID
     else
         print_help
     fi
