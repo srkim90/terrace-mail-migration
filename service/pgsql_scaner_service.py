@@ -271,14 +271,18 @@ class PostgresqlSqlScanner:
         return h_threads
 
     def report_user_and_company(self, days: Days, company_ids: Union[List[int], None] = None):
+        end_day = datetime.datetime.now()
+        start_day = datetime.datetime.strptime("1975-01-01 00:00:00.000000", "%Y-%m-%d %H:%M:%S.%f")
         user_counts = self.get_users_count()
         company_counts = self.get_companies_count()
-        if days is None:
-            days = self.setting_provider
-        end_day = days.end_day.strftime("%Y-%m-%d")
-        start_day = days.start_day.strftime("%Y-%m-%d")
-        stat: ScanStatistic = ScanStatistic.get_empty_statistic(self.setting_provider.date_range.end_day,
-                                                                self.setting_provider.date_range.start_day,
+        if days is None and is_windows() is True:
+            days = self.setting_provider.date_range
+        if days is not None and (days.end_day is not None):
+            end_day = days.end_day.strftime("%Y-%m-%d")
+            if days.start_day is not None:
+                start_day = days.start_day.strftime("%Y-%m-%d")
+        stat: ScanStatistic = ScanStatistic.get_empty_statistic(end_day,
+                                                                start_day,
                                                                 self.report_path)
         stat.add_logfile_name(self.logger.make_log_file_name())
 
