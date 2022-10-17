@@ -14,30 +14,10 @@ from models.mail_migration_result_models import MailMigrationResult
 @dataclass
 class UserMigrationResult:
     id: int
-    start_at: Union[datetime, None] = field(
-        metadata=config(
-            encoder=datetime.isoformat,
-            decoder=datetime.fromisoformat,
-            mm_field=fields.DateTime(format='iso')
-        ))
-    commit_start_at: Union[datetime, None] = field(
-        metadata=config(
-            encoder=datetime.isoformat,
-            decoder=datetime.fromisoformat,
-            mm_field=fields.DateTime(format='iso')
-        ))
-    commit_end_at: Union[datetime, None] = field(
-        metadata=config(
-            encoder=datetime.isoformat,
-            decoder=datetime.fromisoformat,
-            mm_field=fields.DateTime(format='iso')
-        ))
-    end_at: Union[datetime, None] = field(
-        metadata=config(
-            encoder=datetime.isoformat,
-            decoder=datetime.fromisoformat,
-            mm_field=fields.DateTime(format='iso')
-        ))
+    start_at: Union[datetime, None]
+    commit_start_at: Union[datetime, None]
+    commit_end_at: Union[datetime, None]
+    end_at: Union[datetime, None]
     name: str
     message_store: str
     time_consuming: Union[float, None]
