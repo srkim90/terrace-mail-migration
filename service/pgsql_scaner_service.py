@@ -226,7 +226,7 @@ class PostgresqlSqlScanner:
         while True:
             time.sleep(0.5)
             self.lock.acquire()
-            if len(self.work_queue) == 0:
+            if len(self.work_queue) == 0 or get_stop_flags() is True:
                 self.work_queue = None
                 self.lock.release()
                 return
@@ -252,13 +252,13 @@ class PostgresqlSqlScanner:
             self.lock.release()
             return company, idx
 
-    def __company_worker_th(self, days: Days, company_counts: int, stat: ScanStatistic):
+    def __company_worker_th(self, days: Days, company_counts: int, stat: ScanStatistic) -> None:
         # self.work_queue 에서 하나를 빼와서 처리한다. self.work_queue가 None이면 종료 한다.
         # 큐가 비었으면, 쉰다.
-        while get_stop_flags() is False:
+        while True:
             val = self.__dequeue()
-            if val is None:
-                return
+            if val is None or get_stop_flags() is True:
+                break
             company, idx = val
             start: float = time.time()
             json_file_name = None
@@ -268,6 +268,7 @@ class PostgresqlSqlScanner:
                 json_file_name = save_company_as_json(company, self.report_path)
             self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
             update_statistic(stat, company)
+        return
 
     def __make_worker_ths(self, days: Days, company_counts: int, stat: ScanStatistic):
         self.work_queue = []
