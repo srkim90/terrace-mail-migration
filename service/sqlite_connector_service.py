@@ -33,7 +33,9 @@ class SqliteConnector:
     def make_mbackup_conn(self) -> bool:
         db_name: str = self.db_path.replace("_mcache.db", "_mbackup.db")
         if os.path.exists(db_name) is False:
-            raise FileNotFoundError("not exist _mcache.db : %s" % (db_name,))
+            self.logger.info("[company_id=%s, user_id=%s] not exist _mcache.db : %s, skip, _mbackup.db update" % (self.company_id, self.user_id, db_name,))
+            #raise FileNotFoundError("not exist _mcache.db : %s" % (db_name,))
+            return False
         self.mbackup_conn = self.__db_conn(db_name, readonly=False)
         return True
 
@@ -170,6 +172,8 @@ class SqliteConnector:
         return path
 
     def update_mbackup(self, folder_no: int, uid_no: int, new_full_path: str):
+        if self.mbackup_conn is None:
+            return
         # _mbackup_conn = self.__db_conn(self.db_path.replace("_mcache.db", "_mbackup.db"), readonly=False)
         cur = self.mbackup_conn.cursor()
         sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (

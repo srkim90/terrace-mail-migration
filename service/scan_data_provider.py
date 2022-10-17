@@ -2,11 +2,13 @@ import os
 from typing import List, Union
 
 from models.company_models import Company, load_company_from_json
+from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
 
 
 class ScanDataProvider:
     setting_provider: ApplicationSettings = application_container.setting_provider
+    logger: LoggingService = application_container.logger
 
     def __init__(self) -> None:
         super().__init__()
@@ -21,7 +23,15 @@ class ScanDataProvider:
             try:
                 __company_id = int(file_name.split("company_report_")[1].split("_")[0])
             except Exception as e:
-                continue
+                continue # report 파일 이름이 유효하지 않다.
             if company_ids is not None and __company_id not in company_ids:
                 continue
-            yield load_company_from_json(full_path)
+            try:
+                company = load_company_from_json(full_path)
+            except Exception as e:
+                self.logger.error("fail to load company_report skip to migration this company : %s" % (full_path,))
+                continue
+            if len(company.users) == 0 or company.company_mail_count == 0:
+                self.logger.debug("empty user of company skip : full_path=%s, name=%s" % (full_path, company.name))
+                continue
+            yield company
