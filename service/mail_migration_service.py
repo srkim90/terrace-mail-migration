@@ -245,6 +245,8 @@ class MailMigrationService:
         self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
         for idx, user in enumerate(self.company.users):
             if get_stop_flags() is True:
+                self.logger.info("Stop mail migration - stop signal detected! : company=%d, remain-users=%d" %
+                                 (self.company.id, len(self.company.users) - idx))
                 break
             if user_ids is not None and user.id not in user_ids:
                 continue

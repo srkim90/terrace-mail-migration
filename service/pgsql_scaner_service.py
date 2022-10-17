@@ -304,8 +304,10 @@ class PostgresqlSqlScanner:
             if get_stop_flags() is True:
                 break
         self.__wait_for_processing()
-        for h_thread in h_threads:
+        for idx, h_thread in enumerate(h_threads):
             h_thread.join()
+            self.logger.info("wait for worker thread terminated : remain thread=[%d/%d]" % (idx, len(h_threads),))
+        self.logger.info("end of waiting threads")
         stat.scan_end_at = datetime.datetime.now()
         stat.add_logfile_name(self.logger.make_log_file_name())
         self.logger.companies_scan_complete_logging(stat)

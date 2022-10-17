@@ -3,7 +3,9 @@ import logging
 from common_import import *
 from main.cmd.command_line_parser import read_migration_options
 from main.cmd.migration_command_option_models import MigrationCommandOptions
+from service.logging_service import LoggingService
 from service.mail_migration_service import MailMigrationService
+from service.property_provider_service import application_container
 from service.scan_data_provider import ScanDataProvider
 from service.signal_service import install_signal, get_stop_flags
 from utils.utills import set_property_path
@@ -18,11 +20,14 @@ def main() -> None:
     option: MigrationCommandOptions = read_migration_options(test_date)
     provider: ScanDataProvider = ScanDataProvider()
     set_property_path(option.application_yml_path)
+    logger: LoggingService = application_container.logger
     for company in provider.get_company_report_data(option.target_scan_date, company_ids=option.target_company_ids):
         if get_stop_flags() is True:
+            logger.info("Stop mail migration : stop signal detected!")
             break
         transfer = MailMigrationService(company)
         transfer.run(user_ids=option.target_user_ids)
+    return
 
 
 if __name__ == '__main__':
