@@ -255,7 +255,7 @@ class PostgresqlSqlScanner:
     def __company_worker_th(self, days: Days, company_counts: int, stat: ScanStatistic):
         # self.work_queue 에서 하나를 빼와서 처리한다. self.work_queue가 None이면 종료 한다.
         # 큐가 비었으면, 쉰다.
-        while get_stop_flags() is True:
+        while get_stop_flags() is False:
             val = self.__dequeue()
             if val is None:
                 return
