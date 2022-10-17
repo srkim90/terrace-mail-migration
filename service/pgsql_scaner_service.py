@@ -13,6 +13,7 @@ from models.user_models import User
 from service.logging_service import LoggingService
 from service.pgsql_connector_service import PostgresqlConnector
 from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
+from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
 from utils.utills import make_data_file_path, is_windows
 
@@ -254,7 +255,7 @@ class PostgresqlSqlScanner:
     def __company_worker_th(self, days: Days, company_counts: int, stat: ScanStatistic):
         # self.work_queue 에서 하나를 빼와서 처리한다. self.work_queue가 None이면 종료 한다.
         # 큐가 비었으면, 쉰다.
-        while True:
+        while get_stop_flags() is True:
             val = self.__dequeue()
             if val is None:
                 return
@@ -299,6 +300,8 @@ class PostgresqlSqlScanner:
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
             self.__enqueue(company, idx)
+            if get_stop_flags() is True:
+                break
         self.__wait_for_processing()
         for h_thread in h_threads:
             h_thread.join()

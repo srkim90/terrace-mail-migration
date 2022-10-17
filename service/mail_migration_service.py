@@ -17,6 +17,7 @@ from models.user_models import User
 from service.logging_service import LoggingService
 from service.mail_migration_logging_service import MailMigrationLoggingService
 from service.property_provider_service import ApplicationSettings, application_container
+from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
 from utils.utills import handle_userdata_if_windows, is_windows
 
@@ -243,6 +244,8 @@ class MailMigrationService:
         self.logger.info("=====================================================")
         self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
         for idx, user in enumerate(self.company.users):
+            if get_stop_flags() is True:
+                break
             if user_ids is not None and user.id not in user_ids:
                 continue
             self.company_stat.update_company_scan_result(
