@@ -20,12 +20,14 @@ class OrphanScanService:
         # \mindex\10\0\1021
         results: List[str] = []
         base_mindex = self.setting_provider.move_setting.mindex_path
+        self.logger.info("base_mindex : %s" % (base_mindex,))
         if os.path.exists(base_mindex) is False:
             raise FileNotFoundError("Not exist mindex_path : %s" % base_mindex)
         for lv1 in os.listdir(base_mindex):
             midx_lv1 = os.path.join(base_mindex, lv1)
             if os.path.isdir(midx_lv1) is False:
                 continue
+            self.logger.info("__list_up_mcache_db : enter=%s" % (midx_lv1,))
             for lv2 in os.listdir(midx_lv1):
                 midx_lv2 = os.path.join(midx_lv1, lv2)
                 if os.path.isdir(midx_lv2) is False:
