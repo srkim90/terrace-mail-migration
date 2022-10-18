@@ -1,5 +1,6 @@
 import os
 
+from common_import import *
 from models.orphan_scan_models import OrphanScanModels
 from service.orphan_scan_service import OrphanScanService
 from service.property_provider_service import application_container, ApplicationSettings
