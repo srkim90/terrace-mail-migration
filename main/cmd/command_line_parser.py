@@ -5,6 +5,7 @@ import sys
 from typing import Union, List
 
 from main.cmd.migration_command_option_models import MigrationCommandOptions
+from main.cmd.orphan_command_option_models import OrphanCommandOptions
 from main.cmd.scan_command_option_models import ScanCommandOptions
 from models.day_models import Days
 
@@ -86,6 +87,23 @@ def read_scan_options() -> ScanCommandOptions:
             target_company_ids=parser_list(opts.company_id),
             scan_range=scan_range,
             scan_data_save_dir=opts.scan_data_save_directory
+        )
+    except Exception as e:
+        print("Error : %s" % e)
+        parser.print_help()
+        exit()
+
+
+def read_orphan_options() -> OrphanCommandOptions:
+    args = sys.argv[1:]
+    parser = argparse.ArgumentParser(description="The parsing commands lists.")
+    parser.add_argument("-p", "--application-yml-path",
+                        help="(OPTIONAL) application.yml 파일의 경로, 없을 경우 자동으로 찾는다.")
+    try:
+        opts = parser.parse_args(args)
+        validate_application_yml_path(opts.application_yml_path)
+        return OrphanCommandOptions(
+            application_yml_path=opts.application_yml_path
         )
     except Exception as e:
         print("Error : %s" % e)
