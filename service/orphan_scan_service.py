@@ -2,6 +2,7 @@ import os
 from typing import List
 
 from models.orphan_scan_models import OrphanScanModels
+from service.logging_service import LoggingService
 from service.pgsql_scaner_service import PostgresqlSqlScanner
 from service.property_provider_service import application_container, ApplicationSettings
 from service.sqlite_connector_service import SqliteConnector
@@ -10,6 +11,7 @@ from service.sqlite_connector_service import SqliteConnector
 class OrphanScanService:
     pg_scanner: PostgresqlSqlScanner = PostgresqlSqlScanner()
     setting_provider: ApplicationSettings = application_container.setting_provider
+    logger: LoggingService = application_container.logger
 
     def __init__(self) -> None:
         super().__init__()
@@ -72,9 +74,11 @@ class OrphanScanService:
         return n_cnt
 
     def __get_mail_count(self, db_list_all: List[str], db_list_orphan: List[str]) -> (int, int, int):
+        self.logger.info("sort #1")
         all_midxs = self.__sort_mindex_list(db_list_all)
+        self.logger.info("sort #2")
         orphan_midxs = self.__sort_mindex_list(db_list_orphan)
-
+        old_mail_count = 0
         mail_count = 0
         orphan_mail_count = 0
         orphan2_mail_count = 0
@@ -105,27 +109,46 @@ class OrphanScanService:
                         mail_count += len(mail_list)
                         orphan_mail_count += self.__check_orhan_mail_counts(all_midxs, index_xyx, mail_list)
                         orphan2_mail_count += self.__check_orhan_mail_counts(orphan_midxs, index_xyx, mail_list)
+                        if mail_count - old_mail_count > 1000:
+                            old_mail_count = mail_count
+                            self.logger.info("orphan mail check : mail_count=%d, orphan_mail_count=%d, orphan2_mail_count=%d" % (mail_count, orphan_mail_count, orphan2_mail_count))
         return mail_count, orphan_mail_count, orphan2_mail_count
 
 
     def detect(self) -> OrphanScanModels:
+
         company_count = self.pg_scanner.get_companies_count()
         user_count = self.pg_scanner.get_users_count(all_count=True)
         orphan_user_count = user_count - self.pg_scanner.get_users_count(all_count=False)
 
+        self.logger.info("company : company_count=%d " % (company_count,))
+        self.logger.info("user : user_count=%d, orphan_user_count=%d" % (company_count, orphan_user_count))
+
+
         mail_user_count = len(self.pg_scanner.get_mail_user_id_list())
+
         orphan_mail_users = self.pg_scanner.get_mail_user_id_list(exclude_orphan=True)
         orphan2_mail_users = self.pg_scanner.get_mail_user_id_list(exclude_orphan2=True)
         orphan_mail_user_count = mail_user_count - len(orphan_mail_users)
         orphan2_mail_user_count = mail_user_count - len(orphan2_mail_users)
+        self.logger.info("mail : mail_user_count=%d, orphan_mail_user_count=%d, orphan2_mail_user_count=%d" % (
+        mail_user_count, orphan_mail_user_count, orphan2_mail_user_count))
 
         mcache_db = self.__list_up_mcache_db()
+        self.logger.info("list_up_mcache_db end")
         orphan_mcache_db = self.pg_scanner.get_valid_mcache_db_count(mcache_db)
+        self.logger.info("valid_mcache_db_count #1 end")
         orphan2_mcache_db = self.pg_scanner.get_valid_mcache_db_count(mcache_db, orphan2_mail_users)
+        self.logger.info("valid_mcache_db_count #2 end")
 
         mcache_db_count = len(mcache_db)
+        #self.logger.info("mcache_db : mcache_db_count=%d " % (mcache_db_count,))
         orphan_mcache_db_count = mcache_db_count - len(orphan_mcache_db)
+        #self.logger.info("mcache_db : orphan_mcache_db_count=%d " % (orphan_mcache_db_count,))
         orphan2_mcache_db_count = mcache_db_count - len(orphan2_mcache_db)
+        #self.logger.info("mcache_db : orphan2_mcache_db_count=%d " % (orphan2_mcache_db_count,))
+        self.logger.info("mcache_db : mcache_db_count=%d, orphan_mcache_db_count=%d orphan2_mcache_db_count=%d" %
+                         (mcache_db_count, orphan_mcache_db_count, orphan2_mcache_db_count))
 
         mail_count, orphan_mail_count, orphan2_mail_count = self.__get_mail_count(mcache_db, orphan2_mcache_db)
 
