@@ -23,11 +23,12 @@ class OrphanScanService:
         self.logger.info("base_mindex : %s" % (base_mindex,))
         if os.path.exists(base_mindex) is False:
             raise FileNotFoundError("Not exist mindex_path : %s" % base_mindex)
-        for lv1 in os.listdir(base_mindex):
+        all_lv1_cnt = len(os.listdir(base_mindex))
+        for idx, lv1 in enumerate(os.listdir(base_mindex)):
             midx_lv1 = os.path.join(base_mindex, lv1)
             if os.path.isdir(midx_lv1) is False:
                 continue
-            self.logger.info("__list_up_mcache_db : enter=%s" % (midx_lv1,))
+            self.logger.info("[%d/%d]__list_up_mcache_db : enter=%s, detect-db=%d" % (idx, all_lv1_cnt, midx_lv1, len(results)))
             for lv2 in os.listdir(midx_lv1):
                 midx_lv2 = os.path.join(midx_lv1, lv2)
                 if os.path.isdir(midx_lv2) is False:
@@ -84,11 +85,17 @@ class OrphanScanService:
         mail_count = 0
         orphan_mail_count = 0
         orphan2_mail_count = 0
-        for mdata_path in self.setting_provider.move_setting.origin_mdata_path:
-            for lv1 in os.listdir(mdata_path):
+        origin_mdata_path_cnt = len(self.setting_provider.move_setting.origin_mdata_path)
+
+        for idx, mdata_path in enumerate(self.setting_provider.move_setting.origin_mdata_path):
+            mdata_path_cnt = len(os.listdir(mdata_path))
+            for jdx, lv1 in enumerate(os.listdir(mdata_path)):
                 mdata_lv1 = os.path.join(mdata_path, lv1)
                 if os.path.isdir(mdata_lv1) is False:
                     continue
+                self.logger.info(
+                    "[%d/%d] of %d __list_up_mcache_db : enter=%s, detect-db=%d" %
+                    (jdx, mdata_path_cnt, origin_mdata_path_cnt, mdata_lv1, mail_count))
                 for lv2 in os.listdir(mdata_lv1):
                     mdata_lv2 = os.path.join(mdata_lv1, lv2)
                     if os.path.isdir(mdata_lv2) is False:
