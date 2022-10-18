@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Dict
 
 from models.day_models import Days
 from models.mail_models import MailMessage
@@ -101,6 +101,39 @@ class SqliteConnector:
         if s_timestamp is not None:
             sub_query += " and msg_receive > %s" % s_timestamp
         return sub_query
+
+    def check_mail_exist(self, mail_name: str) -> bool:
+        exist = False
+        cur = self.conn.cursor()
+        self.__query_execute(cur, "select count(*) from mail_message where full_path like('%%" + mail_name + "')")
+        for row in cur:
+            count = row[0]
+            if count > 0:
+                exist = True
+            break
+        cur.close()
+        return exist
+
+    def get_mail_all_by_hash(self, only_name: bool = False) -> Dict[str, int]:
+        mails = self.get_mail_all(only_name)
+        result_dict = {}
+        for mail in mails:
+            result_dict[mail] = 1
+        return result_dict
+
+
+    def get_mail_all(self, only_name: bool = False) -> List[str]:
+        mail_list: List[str] = []
+        cur = self.conn.cursor()
+        self.__query_execute(cur, "select full_path from mail_message")
+        for row in cur:
+            full_path: str = row[0]
+            if only_name is True:
+                full_path = full_path.replace("\\", "/").split("/")[-1]
+            mail_list.append(full_path)
+        cur.close()
+        return mail_list
+
 
     def get_target_mail_count(self, days: Union[Days, None]) -> Tuple[int, int]:
         size = 0

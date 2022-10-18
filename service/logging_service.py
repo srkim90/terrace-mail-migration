@@ -131,7 +131,10 @@ class LoggingBase:
         return file_name
 
     def write_log(self, log_message: str, level: LogLevel) -> None:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        except ImportError as e:
+            return
         new_log_message = "[%s] %s : %s" % (timestamp, level.name, log_message)
         ptr_log_message = "[%s] %s%-5s%s : %s" % (
             timestamp, Colors.debug_color(level).value, level.name, Colors.CEND.value, log_message)

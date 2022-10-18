@@ -63,6 +63,39 @@ class PostgresqlSqlScanner:
             self.logger.error("Error. fail in postgresql query job: %s" % (e,))
             exit()
 
+    def get_valid_mcache_db_count(self, mcache_db_list: List[str], valid_user_list: List[int] = None) -> List[str]:
+        new_mcache_db_list: List[str] = []
+        for mcache_db_path in mcache_db_list:
+            mcache_db_path_new = mcache_db_path.replace("\\", "/")
+            mindex_x = mcache_db_path_new.split("/")[-4]
+            mindex_y = mcache_db_path_new.split("/")[-3]
+            mindex_z = mcache_db_path_new.split("/")[-2]
+            like_match = "%s/%s/%s" % (mindex_x, mindex_y, mindex_z)
+            query = "select mail_user_seq from mail_user where message_store like('%%" + like_match + "')"
+            for row in self.__execute_query(query):
+                #total_count += row[0]
+                mail_user_seq = row[0]
+                if valid_user_list is None:
+                    new_mcache_db_list.append(mcache_db_path)
+                elif mail_user_seq in valid_user_list:
+                    new_mcache_db_list.append(mcache_db_path)
+                break
+        return new_mcache_db_list
+
+    def get_mail_user_id_list(self, exclude_orphan: bool = False, exclude_orphan2: bool = False) -> List[int]:
+        where = ""
+        query = "select mail_user_seq from mail_user "
+        if exclude_orphan is True:
+            where = "where mail_user_seq in (select mail_user_seq from go_users)"
+        if exclude_orphan2 is True:
+            where = "where mail_user_seq in (select mail_user_seq from go_users where company_id in " \
+                    "(select id from go_companies))"
+        query += where
+        mail_user_id_list = []
+        for row in self.__execute_query(query):
+            mail_user_id_list.append(row[0])
+        return mail_user_id_list
+
     def find_mail_users(self, company: Company, mail_user_seq: int, ) -> (str, str):
         if mail_user_seq is None:
             raise NotImplementedError
@@ -217,8 +250,10 @@ class PostgresqlSqlScanner:
         for row in self.__execute_query(query):
             return row[0]
 
-    def get_users_count(self):
-        query = "select count(*) from go_users where company_id in (select id from go_companies)"
+    def get_users_count(self, all_count: bool = False):
+        query = "select count(*) from go_users"
+        if all_count is False:
+            query += ' where company_id in (select id from go_companies)'
         for row in self.__execute_query(query):
             return row[0]
 
@@ -297,7 +332,8 @@ class PostgresqlSqlScanner:
                                                                 self.report_path)
         stat.add_logfile_name(self.logger.make_log_file_name())
 
-        self.logger.companies_scan_start_up_logging(end_day.strftime("%Y-%m-%d"), start_day.strftime("%Y-%m-%d"), user_counts, company_counts)
+        self.logger.companies_scan_start_up_logging(end_day.strftime("%Y-%m-%d"), start_day.strftime("%Y-%m-%d"),
+                                                    user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
             self.__enqueue(company, idx)

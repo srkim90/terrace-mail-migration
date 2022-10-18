@@ -28,6 +28,7 @@ class SystemSettings:
 
 class MailMoveSettings:
     property = get_property()["mail"]
+    mindex_path: str = property["path"]["mindex-path"]
     origin_mdata_path: List[str] = parser_dir_list(property["path"]["origin-mdata-path"])
     new_mdata_path: List[str] = parser_dir_list(property["path"]["new-mdata-path"])
     partition_capacity_threshold_ratio: int = int(property["partition-capacity-threshold-ratio"])
