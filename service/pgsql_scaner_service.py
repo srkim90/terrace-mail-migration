@@ -63,23 +63,37 @@ class PostgresqlSqlScanner:
             self.logger.error("Error. fail in postgresql query job: %s" % (e,))
             exit()
 
+    def __str_index_xyx(self, mcache_db_path):
+        mcache_db_path_new = mcache_db_path.replace("\\", "/")
+        mcache_db_path_new = mcache_db_path_new.replace("/_mcache.db", "")
+        mindex_x = mcache_db_path_new.split("/")[-3]
+        mindex_y = mcache_db_path_new.split("/")[-2]
+        mindex_z = mcache_db_path_new.split("/")[-1]
+        like_match = "%s/%s/%s" % (mindex_x, mindex_y, mindex_z)
+        return like_match
+
     def get_valid_mcache_db_count(self, mcache_db_list: List[str], valid_user_list: List[int] = None) -> List[str]:
+        db_result_dict: Dict[str, int] = {}
         new_mcache_db_list: List[str] = []
+        query = "select message_store, mail_user_seq from mail_user"
+        for row in self.__execute_query(query):
+            mail_user_seq = row[1]
+            message_store = row[0]
+            if valid_user_list is not None:
+                if mail_user_seq not in valid_user_list:
+                    continue
+            db_result_dict[self.__str_index_xyx(message_store)] = 1
+
         for mcache_db_path in mcache_db_list:
-            mcache_db_path_new = mcache_db_path.replace("\\", "/")
-            mindex_x = mcache_db_path_new.split("/")[-4]
-            mindex_y = mcache_db_path_new.split("/")[-3]
-            mindex_z = mcache_db_path_new.split("/")[-2]
-            like_match = "%s/%s/%s" % (mindex_x, mindex_y, mindex_z)
-            query = "select mail_user_seq from mail_user where message_store like('%%" + like_match + "')"
-            for row in self.__execute_query(query):
-                #total_count += row[0]
-                mail_user_seq = row[0]
-                if valid_user_list is None:
-                    new_mcache_db_list.append(mcache_db_path)
-                elif mail_user_seq in valid_user_list:
-                    new_mcache_db_list.append(mcache_db_path)
-                break
+            like_match = self.__str_index_xyx(mcache_db_path)
+            try:
+                db_result_dict[like_match] += 1
+                new_mcache_db_list.append(mcache_db_path)
+            except KeyError as e:
+                pass
+
+            #query = "select mail_user_seq from mail_user where message_store like('%%" + like_match + "')"
+
         return new_mcache_db_list
 
     def get_mail_user_id_list(self, exclude_orphan: bool = False, exclude_orphan2: bool = False) -> List[int]:
