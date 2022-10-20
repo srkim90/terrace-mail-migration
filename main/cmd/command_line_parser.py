@@ -123,6 +123,8 @@ def read_sender_options() -> SenderCommandOptions:
         mail_to = opts.mail_to
         if count is None:
             count = -1
+        else:
+            count = int(opts.count)
         return SenderCommandOptions(
             n_send_mail=count,
             mail_to=mail_to
