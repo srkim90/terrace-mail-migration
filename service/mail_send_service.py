@@ -3,6 +3,7 @@ import os
 import platform
 import random
 import smtplib
+import threading
 from typing import Union, List
 
 
@@ -36,6 +37,15 @@ class MailSendService:
         fd.close()
         return new_data
 
+    def __send_mail_smtp(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> None:
+        smtp.sendmail(from_addr=self.sender_uid, to_addrs=to_addrs, msg=message)
+
+    def __start_stat(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> threading.Thread:
+        h_thread = threading.Thread(target=self.__send_mail_smtp, args=(smtp, from_addr, to_addrs, message))
+        h_thread.daemon = True
+        h_thread.start()
+        return h_thread
+
     def send_mail(self, receiver_addrs: Union[str, List[str]], mail_paths: Union[str, List[str]]):
         if type(mail_paths) == str:
             mail_paths = [mail_paths, ]
@@ -45,15 +55,20 @@ class MailSendService:
         if type(receiver_addrs) == str:
             receiver_addrs = [receiver_addrs,]
         smtp = None
+        t_threads = []
         for idx, mail_path in enumerate(mail_paths):
             if smtp is None:
                 smtp = smtplib.SMTP(self.server_host, self.port)
                 smtp.login(self.sender_uid, self.sender_pw)
             message = self.read_qs(mail_path)
             rr_idx = idx % len(receiver_addrs)
-            smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
+            #smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
+            t_threads.append(self.__start_stat(smtp, self.sender_uid, receiver_addrs[rr_idx], message))
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
-            if idx % 10 == 0 and idx != 0:
+            #if idx % 10 == 0 and idx != 0:
+            if len(t_threads) > 10:
+                for t_thread in t_threads:
+                    t_thread.join()
                 smtp.close()
                 smtp = None
 
