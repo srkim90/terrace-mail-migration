@@ -52,8 +52,8 @@ class MailSendService:
             message = self.read_qs(mail_path)
             rr_idx = idx % len(receiver_addrs)
             smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
-            if idx % 10 == 0:
-                print("send mail : [%d/%d]" % (idx, len(mail_paths)))
+            print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
+            if idx % 10 == 0 and idx != 0:
                 smtp.close()
                 smtp = None
 
