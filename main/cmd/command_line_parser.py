@@ -4,6 +4,7 @@ import os
 import sys
 from typing import Union, List
 
+from main.cmd.mail_sender_option_models import SenderCommandOptions
 from main.cmd.migration_command_option_models import MigrationCommandOptions
 from main.cmd.orphan_command_option_models import OrphanCommandOptions
 from main.cmd.scan_command_option_models import ScanCommandOptions
@@ -104,6 +105,27 @@ def read_orphan_options() -> OrphanCommandOptions:
         validate_application_yml_path(opts.application_yml_path)
         return OrphanCommandOptions(
             application_yml_path=opts.application_yml_path
+        )
+    except Exception as e:
+        print("Error : %s" % e)
+        parser.print_help()
+        exit()
+
+
+def read_sender_options() -> SenderCommandOptions:
+    args = sys.argv[1:]
+    parser = argparse.ArgumentParser(description="The parsing commands lists.")
+    parser.add_argument("-c", "--count", help="(OPTIONAL) 보낼 메일 수")
+    parser.add_argument("-t", "--mail-to", help="(MANDATORY) 메일 받을 이메일 계정 ex> aaa@srkim.kr,bbb@srkim.kr")
+    try:
+        opts = parser.parse_args(args)
+        count = opts.count
+        mail_to = opts.mail_to
+        if count is None:
+            count = -1
+        return SenderCommandOptions(
+            n_send_mail=count,
+            mail_to=mail_to
         )
     except Exception as e:
         print("Error : %s" % e)
