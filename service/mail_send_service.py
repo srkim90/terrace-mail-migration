@@ -58,7 +58,7 @@ class MailSendService:
         smtps = [None] * self.max_thread
         t_threads = []
         for idx, mail_path in enumerate(mail_paths):
-            smtp = smtps[idx * self.max_thread]
+            smtp = smtps[idx % self.max_thread]
             if smtp is None:
                 smtp = smtplib.SMTP(self.server_host, self.port)
                 smtp.login(self.sender_uid, self.sender_pw)
