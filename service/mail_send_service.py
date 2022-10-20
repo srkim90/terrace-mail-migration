@@ -76,6 +76,7 @@ class MailSendService:
                     if smtp is not None:
                         smtp.close()
                     smtps[jdx] = None
+                t_threads = []
 
 
     def load_mail_data(self, load_count: int = -1) -> List[str]:
