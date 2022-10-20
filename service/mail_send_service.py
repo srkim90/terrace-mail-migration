@@ -67,7 +67,7 @@ class MailSendService:
                 if ".qs" not in item:
                     continue
                 full_path = os.path.join(root, item)
-                if os.stat(full_path).st_size > 1024 * 1024 * 2:
+                if os.stat(full_path).st_size > 1024 * 1024:
                     continue
                 mail_fills.append(full_path)
         random.shuffle(mail_fills)
