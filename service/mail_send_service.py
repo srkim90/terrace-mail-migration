@@ -55,9 +55,10 @@ class MailSendService:
             return
         if type(receiver_addrs) == str:
             receiver_addrs = [receiver_addrs,]
-        smtp = None
+        smtps = [None] * self.max_thread
         t_threads = []
         for idx, mail_path in enumerate(mail_paths):
+            smtp = smtps[idx * self.max_thread]
             if smtp is None:
                 smtp = smtplib.SMTP(self.server_host, self.port)
                 smtp.login(self.sender_uid, self.sender_pw)
@@ -69,10 +70,13 @@ class MailSendService:
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
             #if idx % 10 == 0 and idx != 0:
             if len(t_threads) > self.max_thread or remain == 0:
-                for t_thread in t_threads:
+                for jdx, t_thread in enumerate(t_threads):
                     t_thread.join()
-                smtp.close()
-                smtp = None
+                    smtp = smtps[jdx]
+                    if smtp is not None:
+                        smtp.close()
+                    smtps[jdx] = None
+
 
     def load_mail_data(self, load_count: int = -1) -> List[str]:
         result = []
