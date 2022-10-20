@@ -47,10 +47,9 @@ class MailSendService:
         smtp = smtplib.SMTP(self.server_host, self.port)
         smtp.login(self.sender_uid, self.sender_pw)
         for idx, mail_path in enumerate(mail_paths):
-            with open(mail_path, "rb") as fd:
-                message = fd.read()
+            message = self.read_qs(mail_path)
             rr_idx = idx % len(receiver_addrs)
-            smtp.sendmail(self.sender_uid, receiver_addrs[rr_idx], message)
+            smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
         smtp.close()
 
     def load_mail_data(self, load_count: int = -1) -> List[str]:
