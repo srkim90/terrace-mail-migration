@@ -44,13 +44,18 @@ class MailSendService:
             return
         if type(receiver_addrs) == str:
             receiver_addrs = [receiver_addrs,]
-        smtp = smtplib.SMTP(self.server_host, self.port)
-        smtp.login(self.sender_uid, self.sender_pw)
+        smtp = None
         for idx, mail_path in enumerate(mail_paths):
+            if smtp is None:
+                smtp = smtplib.SMTP(self.server_host, self.port)
+                smtp.login(self.sender_uid, self.sender_pw)
             message = self.read_qs(mail_path)
             rr_idx = idx % len(receiver_addrs)
             smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
-        smtp.close()
+            if idx % 10 == 0:
+                print("send mail : [%d/%d]" % (idx, len(mail_paths)))
+                smtp.close()
+                smtp = None
 
     def load_mail_data(self, load_count: int = -1) -> List[str]:
         result = []
