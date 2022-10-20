@@ -14,6 +14,7 @@ class MailSendService:
         self.port = port
         self.sender_uid = sender_uid
         self.sender_pw = sender_pw
+        self.max_thread = 10
         if "window" in platform.system().lower():
             self.base_path = "D:\\data\\terracehamadm"
         else:
@@ -64,9 +65,10 @@ class MailSendService:
             rr_idx = idx % len(receiver_addrs)
             #smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
             t_threads.append(self.__start_stat(smtp, self.sender_uid, receiver_addrs[rr_idx], message))
+            remain = len(mail_paths) - (idx + 1)
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
             #if idx % 10 == 0 and idx != 0:
-            if len(t_threads) > 10:
+            if len(t_threads) > self.max_thread or remain == 0:
                 for t_thread in t_threads:
                     t_thread.join()
                 smtp.close()
