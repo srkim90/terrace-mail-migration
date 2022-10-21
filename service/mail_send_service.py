@@ -69,7 +69,7 @@ class MailSendService:
             remain = len(mail_paths) - (idx + 1)
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
             #if idx % 10 == 0 and idx != 0:
-            if len(t_threads) > self.max_thread or remain == 0:
+            if len(t_threads) >= self.max_thread or remain == 0:
                 for jdx, t_thread in enumerate(t_threads):
                     t_thread.join()
                     smtp = smtps[jdx]
