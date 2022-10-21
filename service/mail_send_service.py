@@ -57,6 +57,7 @@ class MailSendService:
             receiver_addrs = [receiver_addrs,]
         smtps = [None] * self.max_thread
         t_threads = []
+        n_send_mails = 0
         for idx, mail_path in enumerate(mail_paths):
             smtp = smtps[idx % self.max_thread]
             if smtp is None:
@@ -68,14 +69,20 @@ class MailSendService:
             t_threads.append(self.__start_stat(smtp, self.sender_uid, receiver_addrs[rr_idx], message))
             remain = len(mail_paths) - (idx + 1)
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
+            n_send_mails += 1
             #if idx % 10 == 0 and idx != 0:
             if len(t_threads) >= self.max_thread or remain == 0:
+                f_reset_smtp = False
+                if n_send_mails > self.max_thread * 10:
+                    n_send_mails = 0
+                    f_reset_smtp = True
                 for jdx, t_thread in enumerate(t_threads):
                     t_thread.join()
-                    smtp = smtps[jdx]
-                    if smtp is not None:
-                        smtp.close()
-                    smtps[jdx] = None
+                    if f_reset_smtp is True:
+                        smtp = smtps[jdx]
+                        if smtp is not None:
+                            smtp.close()
+                        smtps[jdx] = None
                 t_threads = []
 
 
