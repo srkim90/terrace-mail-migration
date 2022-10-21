@@ -5,6 +5,8 @@ PYTHON_DIR=${BASE_DIR}/binary/Python-minimum
 PYTHON=${PYTHON_DIR}/python
 YML_PATH=${BASE_DIR}/profile/application.yml
 
+source $BASE_DIR/common.sh
+
 print_help() {
     echo -e "\n"
     echo '================================================================================================================'
@@ -46,6 +48,7 @@ init() {
 }
 
 main() {
+    check
     init
     check_env
 

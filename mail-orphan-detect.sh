@@ -7,7 +7,7 @@ PYTHON=${PYTHON_DIR}/python
 #export __YML_PATH="/home/mailadm/tmp/test-yml/application-move-to-old.yml" # 이관 한 데이터 다시 원래 디렉토리로 이동
 export __YML_PATH="/home/mailadm/tmp/test-yml/application-move-to-new.yml" # 이관
 
-
+source $BASE_DIR/common.sh
 
 check_env() {
     if [ "$__YML_PATH" != "" ]; then
@@ -25,6 +25,7 @@ init() {
 }
 
 main() {
+    check
     init
     check_env
     execute_python

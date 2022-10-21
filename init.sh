@@ -30,7 +30,11 @@ if [ ! -e $PYTHON_TAR_FILE_PATH ]; then
   exit
 fi
 
+
+source $BASE_DIR/common.sh
+
 if [ ! -e $PYTHON_BIN ]; then
+    check
     echo "Python-${PYTHON_VER} does not exist. Install"
     cd ${BASE_PYTHON_DIR}
     tar -zxf $PYTHON_TAR_FILE_NAME
