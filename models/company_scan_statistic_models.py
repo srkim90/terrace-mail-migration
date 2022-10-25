@@ -14,7 +14,7 @@ from utils.utills import get_property, parser_dir_list
 @dataclass_json
 @dataclass
 class ScanStatistic:
-    counting_date_range: Union[Days, None]
+    #counting_date_range: Union[Days, None]
     scan_start_at: datetime = field(
         metadata=config(
             encoder=datetime.isoformat,
@@ -72,7 +72,7 @@ class ScanStatistic:
     def get_empty_statistic(scan_end_date: datetime, scan_start_date: datetime, report_save_path: str):
         log_file_names: List[str] = []
         return ScanStatistic(
-            counting_date_range=None,
+            #counting_date_range=None,
             scan_start_at=datetime.now(),
             scan_end_at=None,
             company_mail_size_in_db=0,

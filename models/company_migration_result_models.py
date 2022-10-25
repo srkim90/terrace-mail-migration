@@ -69,12 +69,15 @@ class CompanyMigrationResult:
             else:
                 self.n_migration_mail_fail += 1
 
+def get_g_start_up_time():
+    return g_start_up_time
+
 g_start_up_time=None
 def save_company_migration_report_as_json(result: CompanyMigrationResult, save_path: str) -> str:
     global g_start_up_time
     if g_start_up_time is None:
         g_start_up_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_path = os.path.join(save_path, g_start_up_time)
+    save_path = os.path.join(save_path, g_start_up_time, "companies")
     if os.path.exists(save_path) is False:
         try:
             os.makedirs(save_path)

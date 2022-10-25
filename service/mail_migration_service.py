@@ -240,7 +240,7 @@ class MailMigrationService:
         self.migration_logging.inc_sqlite_db_close()
         return user_stat
 
-    def run(self, user_ids: Union[List[int], None] = None):
+    def run(self, user_ids: Union[List[int], None] = None) -> CompanyMigrationResult:
         self.logger.info("=====================================================")
         self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
         for idx, user in enumerate(self.company.users):
@@ -258,3 +258,4 @@ class MailMigrationService:
         self.logger.info("=====================================================")
         self.logger.info("end company mail transfer: %s" % self.__make_log_identify())
         self.logger.info("=====================================================")
+        return self.company_stat

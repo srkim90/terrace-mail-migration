@@ -5,7 +5,7 @@ from typing import List, Union, Tuple
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
-
+from models.company_global_migration_result_models import CompanyGlobalMigrationResult
 
 g_stop_flags = False
 
@@ -69,10 +69,10 @@ class TransactionStatistic:
 
 class MailMigrationLoggingService:
     stat_permanent = TransactionStatistic()
-    stat_10sec = TransactionStatistic()
-    stat_60sec = TransactionStatistic()
-    stat_300sec = TransactionStatistic()
-    stat_600sec = TransactionStatistic()
+    stat_10sec: TransactionStatistic = TransactionStatistic()
+    stat_60sec: TransactionStatistic = TransactionStatistic()
+    stat_300sec: TransactionStatistic = TransactionStatistic()
+    stat_600sec: TransactionStatistic = TransactionStatistic()
     logger = None
 
     def __init__(self) -> None:
