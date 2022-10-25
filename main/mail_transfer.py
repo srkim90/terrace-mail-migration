@@ -26,7 +26,7 @@ def main() -> None:
     logger: LoggingService = application_container.logger
     setting_provider: ApplicationSettings = application_container.setting_provider
     global_stat: CompanyGlobalMigrationResult = CompanyGlobalMigrationResult()
-    for company in provider.get_company_report_data(option.target_scan_date, company_ids=option.target_company_ids):
+    for company in provider.get_company_report_data(option.target_scan_data, company_ids=option.target_company_ids):
         if get_stop_flags() is True:
             logger.info("Stop mail migration : stop signal detected!")
             break
