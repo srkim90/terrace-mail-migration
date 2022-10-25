@@ -23,7 +23,8 @@ main() {
         __END_DATE=${END_DATE}
         __START_DAY=${START_DAY}
     fi   
-    ./mail-scan.sh ${REPORT_DIR} $END_DATE $START_DATE
+    #./mail-scan.sh ${REPORT_DIR} $__END_DATE $__START_DATE
+    REPORT_DIR=report_20221025_181843
     ./mail-migration.sh ${REPORT_DIR}
 }
 
