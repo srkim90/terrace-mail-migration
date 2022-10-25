@@ -73,7 +73,6 @@ class MailMigrationLoggingService:
     stat_60sec: TransactionStatistic = TransactionStatistic()
     stat_300sec: TransactionStatistic = TransactionStatistic()
     stat_600sec: TransactionStatistic = TransactionStatistic()
-    stats: List[List[TransactionStatistic, Union[int, None], int]]
     logger = None
 
     def __init__(self) -> None:
@@ -81,7 +80,7 @@ class MailMigrationLoggingService:
 
         now_time = time.time()
         self.lock = threading.Semaphore(1)
-        self.stats = [
+        self.stats: List[List[TransactionStatistic, Union[int, None], int]] = [
             [self.stat_permanent, None, now_time],
             [self.stat_10sec, 10, now_time],
             [self.stat_60sec, 60, now_time],
