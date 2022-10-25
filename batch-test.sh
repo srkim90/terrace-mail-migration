@@ -1,8 +1,8 @@
 #!/bin/bash
 
 BASE_DIR=/opt/terrace-mail-migration
-END_DATE=`date "+%Y-%m-%d" --date "0 days ago"`
-START_DATE=`date "+%Y-%m-%d" --date "15000 days ago"`
+__END_DATE=`date "+%Y-%m-%d" --date "0 days ago"`
+__START_DATE=`date "+%Y-%m-%d" --date "15000 days ago"`
 REPORT_DIR=report_`date "+%Y%m%d_%H%M%S"`
 
 source $BASE_DIR/common.sh
@@ -14,6 +14,15 @@ export __YML_PATH="/home/mailadm/tmp/test-yml/application-move-to-new.yml" # 이
 main() {
     cd ${BASE_DIR}
     check
+
+
+    if [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" == "" ]; then
+        __END_DATE=${1}
+        __START_DAY=${2}
+    elif [ "$START_DAY" != "" ] && [ "$END_DATE" != "" ]; then
+        __END_DATE=${END_DATE}
+        __START_DAY=${START_DAY}
+    fi   
     ./mail-scan.sh ${REPORT_DIR} $END_DATE $START_DATE
     ./mail-migration.sh ${REPORT_DIR}
 }
