@@ -98,6 +98,21 @@ class MailMigrationService:
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_LOWER_PRIORITY:
             return min(avail_list)[0]
 
+    @staticmethod
+    def __check_eml_ext(eml_name: str) -> bool:
+        check_list_1 = ["eml", "qs", "qm"]
+        check_list_2 = ["eml.gz", "qs.gz", "qm.gz"]
+        eml_slice = eml_name.split(".")
+        ext_1 = eml_slice[-1].lower()
+        ext_2 = None
+        if len(eml_slice) >= 3:
+            ext_2 = "%s.%s" % (eml_name.split(".")[-2].lower(), ext_1)
+        if ext_1 in check_list_1:
+            return True
+        if ext_2 is not None and ext_2 in check_list_2:
+            return True
+        return False
+
     def __m_data_subdir_parser(self, org_full_path: str):
         org_path_slice = org_full_path.split(self.dir_separator)
         if len(org_path_slice) < 6:
@@ -108,7 +123,7 @@ class MailMigrationService:
         index3 = org_path_slice[-3]
         index2 = org_path_slice[-4]
         index1 = org_path_slice[-5]
-        if eml_name.split(".")[-1] != "eml":
+        if self.__check_eml_ext(eml_name) is False:
             self.logger.info("Invalid path of email : %s" % (org_full_path,))
             return None
         return os.path.join(index1, index2, index3, yyyymmdd)

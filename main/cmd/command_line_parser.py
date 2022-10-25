@@ -150,16 +150,16 @@ def read_migration_options(test_date: str = Union[None, str]) -> MigrationComman
                         help="(OPTIONAL) application.yml 파일의 경로, 없을 경우 자동으로 찾는다.")
     try:
         opts = parser.parse_args(args)
-        target_scan_date = opts.target_scan_date
-        if target_scan_date is None and is_windows() is True:
-            target_scan_date = test_date
-        if target_scan_date is None:
+        target_scan_data = opts.target_scan_data
+        if target_scan_data is None and is_windows() is True:
+            target_scan_data = test_date
+        if target_scan_data is None:
             raise FileNotFoundError("마이그레이션 수행 대상 데이터 파일 위치가 지정 되지 않았습니다. ")
         validate_application_yml_path(opts.application_yml_path)
         return MigrationCommandOptions(
             target_company_ids=parser_list(opts.company_id),
             target_user_ids=parser_list(opts.user_id),
-            target_scan_date=target_scan_date,
+            target_scan_data=target_scan_data,
             application_yml_path=opts.application_yml_path
         )
     except Exception as e:
