@@ -4,7 +4,7 @@ import os
 import platform
 import random
 import shutil
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 
 from enums.migration_result_type import UserMigrationResultType, MailMigrationResultType
 from enums.move_strategy_type import MoveStrategyType
@@ -23,6 +23,7 @@ from utils.utills import handle_userdata_if_windows, is_windows
 
 
 class MailMigrationService:
+    inode_checker: Dict[int, str]
     company: Company
     report_file_name: str
     is_window: Union[bool, None]
@@ -39,6 +40,7 @@ class MailMigrationService:
         self.move_setting = self.setting_provider.move_setting
         self.migration_logging.start_stat()
         self.company_stat = self.__init_statistic()
+        self.inode_checker = {}
 
     def __init_statistic(self) -> CompanyMigrationResult:
         return CompanyMigrationResult(
@@ -128,7 +130,8 @@ class MailMigrationService:
             return None
         return os.path.join(index1, index2, index3, yyyymmdd)
 
-    def __copy_mail_file(self, org_full_path: str) -> Union[str, None]:
+    def __copy_mail_file(self, mail: MailMessage) -> Union[str, None]:
+        org_full_path = mail.full_path
         new_mdata_path = self.__select_move_target_dir()
         if self.__check_origin_mdata_path(org_full_path) is False:
             self.logger.debug("application.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다. (SKIP) : org_full_path=%s, %s" %
@@ -148,10 +151,31 @@ class MailMigrationService:
             self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재합니다. : full_new_file=%s, %s" %
                               (full_new_file, self.__make_log_identify()))
             return None
-        shutil.copy2(org_full_path, full_new_file)
+        if len(mail.hardlinks) <= 1: # 하드링크 걸린 메일이 아니다.
+            shutil.copy2(org_full_path, full_new_file)
+        else: # 하드링크가 존재하는 메일이다.
+            self.__handle_hardlink(mail, full_new_file)
         self.migration_logging.inc_mail_copy()
         self.migration_logging.inc_disk_write(os.stat(full_new_file).st_size)
         return full_new_file
+
+    def __handle_hardlink(self, mail: MailMessage, full_new_file: str):
+        org_full_path = mail.full_path
+        if self.move_setting.enable_hardlink is False:
+            shutil.copy2(org_full_path, full_new_file)
+            return
+        try:
+            same_eml = self.inode_checker[mail.st_ino]
+        except KeyError:
+            # 하드링크가 존재하지 않는다.
+            shutil.copy2(org_full_path, full_new_file)
+            self.inode_checker[mail.st_ino] = full_new_file
+            return
+        if os.path.exists(same_eml) is True:
+            os.link(same_eml, full_new_file)
+        else:
+            self.logger.error("Error. ")
+            shutil.copy2(org_full_path, full_new_file)
 
     def __make_log_identify(self, user: User = None, message: str = ""):
         log_identify = "company_id=%d(%s)" % (self.company.id, self.company.name)
@@ -167,7 +191,7 @@ class MailMigrationService:
             self.migration_logging.inc_migration_fail_already_removed()
             return False, None, None, MailMigrationResultType.ALREADY_REMOVED
         org_full_path = mail.full_path
-        new_full_path = self.__copy_mail_file(org_full_path)
+        new_full_path = self.__copy_mail_file(mail)
         if new_full_path is None:
             self.migration_logging.inc_migration_fail_invalid_new_directory()
             self.logger.minor("Fail to create new mail file: %s" % self.__make_log_identify(user))

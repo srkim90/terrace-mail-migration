@@ -33,6 +33,7 @@ class MailMoveSettings:
     new_mdata_path: List[str] = parser_dir_list(property["path"]["new-mdata-path"])
     partition_capacity_threshold_ratio: int = int(property["partition-capacity-threshold-ratio"])
     move_strategy: MoveStrategyType = move_strategy_type_converter(property["move-strategy"])
+    enable_hardlink: str = bool(property["enable-hardlink"])
 
 
 class DateRangeSettings:
