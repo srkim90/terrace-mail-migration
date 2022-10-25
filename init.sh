@@ -10,6 +10,7 @@ else
     echo "only support CentOS 6 or 7"
     exit
 fi
+BASE_DIR="/opt/terrace-mail-migration"
 BASE_PYTHON_DIR=./binary
 PYTHON_TAR_FILE_NAME=Python-${PYTHON_VER}-minimum.tar.gz
 PYTHON_TAR_FILE_PATH=${BASE_PYTHON_DIR}/${PYTHON_TAR_FILE_NAME}
