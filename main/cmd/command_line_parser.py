@@ -138,7 +138,7 @@ def read_sender_options() -> SenderCommandOptions:
 def read_migration_options(test_date: str = Union[None, str]) -> MigrationCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
-    parser.add_argument("-d", "--target-scan-date",
+    parser.add_argument("-d", "--target-scan-data",
                         help="(MANDATORY) 마이그레이션 수행 대상 데이터 파일 위치 (mail_scanner.py 의 결과 디렉토리)")
     parser.add_argument("-c", "--company-id",
                         help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
