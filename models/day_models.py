@@ -31,6 +31,9 @@ class Days:
         return self.start_day.timestamp()
 
     def get_end_day_timestamp(self):
+        now_time = datetime.now().strftime("%Y%m%d")
+        if now_time == self.end_day.strftime("%Y%m%d"):
+            return datetime.now().timestamp()
         if self.end_day is None:
             return None
         return self.end_day.timestamp()
