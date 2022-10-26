@@ -120,14 +120,17 @@ def read_sender_options() -> SenderCommandOptions:
     try:
         opts = parser.parse_args(args)
         count = opts.count
-        mail_to = opts.mail_to
+        mail_to: str = opts.mail_to
+        mail_to_list: List[str] = mail_to.replace("[", "").replace("]", ""). \
+            replace('"', "").replace("'", "").\
+            replace('\n', "").replace("\t", "").replace(" ", "").split(",")
         if count is None:
             count = -1
         else:
             count = int(opts.count)
         return SenderCommandOptions(
             n_send_mail=count,
-            mail_to=mail_to
+            mail_to=mail_to_list
         )
     except Exception as e:
         print("Error : %s" % e)
