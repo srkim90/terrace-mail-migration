@@ -228,21 +228,27 @@ class PostgresqlSqlScanner:
 
         return company
 
-    # inode 정보를 업데이트 해서 하드 링크여부를 파악한다.
+    # inode 정보를 업데이트 해서 하드 링크여부를 파악한다. (company 당 한번 동작)
     def __add_mail_inode_info(self, company: Company) -> Company:
+        if self.setting_provider.move_setting.enable_hardlink is False:
+            return company
         node_dict: Dict[int, List[MailMessage]] = {}
         for user in company.users:
+            # step.1 : 모든 사용자를 대상으로 inode 별 dict을 만든다.
             for mail in user.messages:
                 inode = mail.st_ino
                 try:
                     node_dict[inode].append(mail)
                 except KeyError:
                     node_dict[inode] = [mail]
-                for other_mail in node_dict[inode]:
+        for user in company.users:
+            for mail in user.messages:
+                inode = mail.st_ino
+                for other_mail in node_dict[inode]: # 각 개별메일에서 하드링크 카운트 및 목록을 업데이트 해준다.
                     if other_mail.full_path not in mail.hardlinks:
                         mail.hardlinks.append(other_mail.full_path)
                 mail.hardlink_count = len(mail.hardlinks)
-        # company객체에 통계 정보를 업데이트 해준다.
+        # step.2 : company객체에 통계 정보를 업데이트 해준다.
         for inode in node_dict.keys():
             for idx, mail in enumerate(node_dict[inode]):
                 if mail.hardlink_count >= 2:
