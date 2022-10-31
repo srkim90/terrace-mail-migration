@@ -19,7 +19,7 @@ from service.mail_migration_logging_service import MailMigrationLoggingService
 from service.property_provider_service import ApplicationSettings, application_container
 from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
-from utils.utills import handle_userdata_if_windows, is_windows
+from utils.utills import handle_userdata_if_windows, is_windows, str_stack_trace
 
 
 class MailMigrationService:
@@ -256,8 +256,9 @@ class MailMigrationService:
                 is_success, delete_mail_path, new_mail_path, result_type = self.__move_a_file(user, mail, conn)
             except Exception as e:
                 self.logger.error(
-                    "Error. fail in __move_a_file : uid=%d, company_id=%d, mail_uid_no=%d, folder_no=%d, e=%s"
-                    % (user.id, company.id, mail.uid_no, mail.folder_no, e))
+                    "Error. fail in __move_a_file : uid=%d, company_id=%d, mail_uid_no=%d, folder_no=%d, e=%s, trace=\n%s"
+                    % (user.id, company.id, mail.uid_no, mail.folder_no, e, str_stack_trace()))
+
                 self.migration_logging.inc_migration_fail_unexpected_error()
             if is_success is True:
                 self.migration_logging.inc_migration_success()

@@ -12,7 +12,7 @@ logging:
 mail:
   enable-hardlink: true
   partition-capacity-threshold-ratio: 90
-  move-strategy: ROUND_ROBIN # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
+  move-strategy: REMAINING_CAPACITY_LOWER_PRIORITY # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
   path:
     mindex-path: D:\data\mindex\opt\TerraceTims\mindex # 스캔용도, 이관시에는 DB값 참조해서 찾는다.
     #origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata

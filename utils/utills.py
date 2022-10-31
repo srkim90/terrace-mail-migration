@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 import dataclasses, json
 import datetime
@@ -58,7 +59,7 @@ g_property_path: Union[str, None] = None
 def check_property_options():
     for item in sys.argv[1:]:
         if "--application-yml-path" in item:
-            application_yml_path=item.split("=")[-1].strip()
+            application_yml_path = item.split("=")[-1].strip()
             set_property_path(application_yml_path)
             break
 
@@ -70,6 +71,14 @@ def set_property_path(property_path: str) -> None:
 
 
 g_checked = False
+
+
+def str_stack_trace() -> str:
+    type, value, tb = sys.exc_info()
+    ex_traceback = traceback.format_exception(type, value, tb)
+    #tb_lines = [line.rstrip('\n') for line in ex_traceback]
+    #for
+    return ex_traceback
 
 
 def get_property() -> dict:
