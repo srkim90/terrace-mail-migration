@@ -89,8 +89,8 @@ class MailMigrationService:
         strategy: MoveStrategyType = self.move_setting.move_strategy
         avail_list = []
         idx = 0
-        max_idx = None
-        min_idx = None
+        max_idxs: List[int] = []
+        min_idxs: List[int] = []
         max_ratio = None
         min_ratio = None
         for path in self.move_setting.new_mdata_path:
@@ -99,18 +99,22 @@ class MailMigrationService:
                 continue
             avail_list.append([ratio, path, ])
             if max_ratio is None or ratio > max_ratio:
-                max_idx = idx
+                max_idxs = [idx,]
                 max_ratio = ratio
+            elif ratio == max_ratio:
+                max_idxs.append(idx)
             if min_ratio is None or ratio < min_ratio:
-                min_idx = idx
+                min_idxs = [idx,]
                 min_ratio = ratio
+            elif ratio == min_ratio:
+                min_idxs.append(idx)
             idx += 1
         if strategy == MoveStrategyType.RANDOM or strategy == MoveStrategyType.ROUND_ROBIN:
             return avail_list[random.randrange(0, len(avail_list))][1]
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_HIGHER_PRIORITY:
-            return avail_list[max_idx][1]
+            return avail_list[max_idxs[random.randrange(0, len(max_idxs))]][1]
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_LOWER_PRIORITY:
-            return avail_list[min_idx][1]
+            return avail_list[min_idxs[random.randrange(0, len(min_idxs))]][1]
 
     @staticmethod
     def __check_eml_ext(eml_name: str) -> bool:
