@@ -75,9 +75,9 @@ g_checked = False
 
 def str_stack_trace() -> str:
     type, value, tb = sys.exc_info()
-    ex_traceback = traceback.format_exception(type, value, tb)
-    #tb_lines = [line.rstrip('\n') for line in ex_traceback]
-    #for
+    ex_traceback = ""
+    for line in traceback.format_exception(type, value, tb):
+        ex_traceback += "%s\n" % (line,)
     return ex_traceback
 
 
