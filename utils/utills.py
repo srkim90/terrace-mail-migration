@@ -77,7 +77,7 @@ def str_stack_trace() -> str:
     type, value, tb = sys.exc_info()
     ex_traceback = ""
     for line in traceback.format_exception(type, value, tb):
-        ex_traceback += "%s\n" % (line,)
+        ex_traceback += "%s" % (line,)
     return ex_traceback
 
 
