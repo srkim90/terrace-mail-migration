@@ -88,17 +88,29 @@ class MailMigrationService:
         threshold_ratio = self.move_setting.partition_capacity_threshold_ratio
         strategy: MoveStrategyType = self.move_setting.move_strategy
         avail_list = []
+        idx = 0
+        max_idx = None
+        min_idx = None
+        max_ratio = None
+        min_ratio = None
         for path in self.move_setting.new_mdata_path:
             ratio = self.__calc_volume_used_ratio(path)
             if ratio >= threshold_ratio:
                 continue
             avail_list.append([ratio, path, ])
+            if max_ratio is None or ratio > max_ratio:
+                max_idx = idx
+                max_ratio = ratio
+            if min_ratio is None or ratio < min_ratio:
+                min_idx = idx
+                min_ratio = ratio
+            idx += 1
         if strategy == MoveStrategyType.RANDOM or strategy == MoveStrategyType.ROUND_ROBIN:
             return avail_list[random.randrange(0, len(avail_list))][1]
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_HIGHER_PRIORITY:
-            return max(avail_list)[0]
+            return avail_list[max_idx][1]
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_LOWER_PRIORITY:
-            return min(avail_list)[0]
+            return avail_list[min_idx][1]
 
     @staticmethod
     def __check_eml_ext(eml_name: str) -> bool:
@@ -142,8 +154,12 @@ class MailMigrationService:
                               (self.move_setting.new_mdata_path, self.__make_log_identify()))
             return None
         file_name = org_full_path.split(self.dir_separator)[-1]
-        new_dir = os.path.join(self.__select_move_target_dir(), self.__m_data_subdir_parser(org_full_path))
+        select_move_target_dir = self.__select_move_target_dir()
+        m_data_subdir = self.__m_data_subdir_parser(org_full_path)
+        self.logger.debug("new_mdata_path: %s, select_move_target_dir: %s, m_data_subdir: %s" % (new_mdata_path, select_move_target_dir, m_data_subdir))
+        new_dir = os.path.join(select_move_target_dir, m_data_subdir)
         new_dir = os.path.join(new_mdata_path, new_dir)
+        self.logger.debug("new_dir: %s" % (new_dir,))
         if os.path.exists(new_dir) is False:
             os.makedirs(new_dir)
         full_new_file = os.path.join(new_dir, file_name)
