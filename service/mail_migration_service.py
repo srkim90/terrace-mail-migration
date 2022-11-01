@@ -72,6 +72,9 @@ class MailMigrationService:
 
     def __check_origin_mdata_path(self, org_full_path: str) -> bool:
         for valid_path in self.move_setting.origin_mdata_path:
+            valid_path = valid_path.strip()
+            if valid_path[-1] != self.dir_separator:
+                valid_path += self.dir_separator
             if valid_path in org_full_path:
                 return True
         return False
