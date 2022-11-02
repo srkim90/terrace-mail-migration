@@ -10,6 +10,7 @@ logging:
   stdout-log-level: INFO # DEBUG, MINOR, INFO, ERROR
   max-logfile-size: 10240 # MB
 mail:
+  final-check-method: md5sum # md5sum, size, none (default: size)
   enable-hardlink: true
   partition-capacity-threshold-ratio: 90
   move-strategy: REMAINING_CAPACITY_LOWER_PRIORITY # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY

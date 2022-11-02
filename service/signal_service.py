@@ -5,6 +5,7 @@ from service.logging_service import LoggingService
 from service.property_provider_service import application_container
 from utils.utills import is_windows
 
+is_init_signal = False
 g_stop_flags = False
 
 
@@ -21,9 +22,13 @@ def __signal_handler(signum: int, frame):
 
 
 def install_signal():
+    global is_init_signal
+    if is_init_signal is True:
+        return
     if is_windows() is True:
         handle_signals = [signal.SIGINT]
     else:
         handle_signals = [signal.SIGINT, signal.SIGUSR1, signal.SIGUSR2]
     for signum in handle_signals:
         signal.signal(signum, __signal_handler)
+    is_init_signal = True

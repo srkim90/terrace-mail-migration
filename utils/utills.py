@@ -1,3 +1,4 @@
+import hashlib
 import sys
 import traceback
 
@@ -9,6 +10,7 @@ from typing import List, Union
 
 import yaml as yaml
 
+from models.company_models import Company
 from models.user_models import User
 
 
@@ -129,3 +131,18 @@ def make_data_file_path(file_path: str, sub_dirs: List[str] = None) -> str:
         for dir_name in sub_dirs:
             file_path = os.path.join(file_path, dir_name)
     return file_path
+
+
+def print_user_info(company: Company, user: User) -> str:
+    return "company_id:%s, user_id=%d, mail_uid=%s, name=%s, message_store=%s" % (
+        company.id, user.id, user.mail_uid, user.name, user.message_store)
+
+
+def calc_file_hash(path: str) -> Union[str, None]:
+    if os.path.exists(path) is False:
+        return None
+    if os.path.isfile(path) is False:
+        return None
+    f = open(path, 'rb')
+    data = f.read()
+    return hashlib.md5(data).hexdigest()

@@ -1,5 +1,5 @@
 import os
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from models.company_models import Company, load_company_from_json
 from service.logging_service import LoggingService
@@ -14,7 +14,7 @@ class ScanDataProvider:
         super().__init__()
         self.property: ReportSettings = self.setting_provider.report
 
-    def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Company]:
+    def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
         report_path = os.path.join(os.path.join(self.property.report_path, tag, "companies"))
         for file_name in os.listdir(report_path):
             full_path = os.path.join(report_path, file_name)
@@ -34,4 +34,4 @@ class ScanDataProvider:
             if len(company.users) == 0 or company.company_mail_count == 0:
                 self.logger.debug("empty user of company skip : full_path=%s, name=%s" % (full_path, company.name))
                 continue
-            yield company
+            yield company, full_path

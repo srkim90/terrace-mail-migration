@@ -6,6 +6,7 @@ from models.day_models import Days
 from models.mail_models import MailMessage
 from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, application_container
+from utils.utills import str_stack_trace
 
 
 class SqliteConnector:
@@ -77,7 +78,13 @@ class SqliteConnector:
 
     def commit(self) -> bool:
         if self.conn is not None:
-            self.conn.commit()
+            try:
+                self.conn.commit()
+            except Exception as e:
+                self.logger.error("commit fail : %s\n%s" % (e, str_stack_trace()))
+                return False
+        else:
+            return False
         if self.mbackup_conn is not None:
             self.mbackup_conn.commit()
         return True

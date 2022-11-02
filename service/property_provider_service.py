@@ -34,6 +34,9 @@ class MailMoveSettings:
     partition_capacity_threshold_ratio: int = int(property["partition-capacity-threshold-ratio"])
     move_strategy: MoveStrategyType = move_strategy_type_converter(property["move-strategy"])
     enable_hardlink: str = bool(property["enable-hardlink"])
+    final_check_method: str = "size"
+    if "final-check-method" in property.keys():
+        final_check_method: str = property["final-check-method"]
 
 
 class DateRangeSettings:
