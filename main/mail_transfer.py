@@ -1,3 +1,4 @@
+from common_import import *
 import logging
 import multiprocessing
 from time import sleep
