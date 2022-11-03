@@ -175,6 +175,7 @@ class MailMigrationService:
             self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재합니다. : full_new_file=%s, %s" %
                               (full_new_file, self.__make_log_identify()))
             return None
+        #self.convert_mail_dir_volume_to_same_first_hardlink_test(full_new_file, full_new_file)
         if len(mail.hardlinks) <= 1: # 하드링크 걸린 메일이 아니다.
             shutil.copy2(org_full_path, full_new_file)
         else: # 하드링크가 존재하는 메일이다.
@@ -193,6 +194,20 @@ class MailMigrationService:
             if path == org_path:
                 return org_path
         return None
+
+    def convert_mail_dir_volume_to_same_first_hardlink_test(self, same_eml, full_new_file):
+        same_eml_volume_path = self.__get_move_target_volume_path(same_eml)
+        new_eml_volume_path = self.__get_move_target_volume_path(full_new_file)
+        if same_eml_volume_path is None or new_eml_volume_path is None:
+            return None
+        #if same_eml_volume_path == new_eml_volume_path:
+        #    return full_new_file
+        full_new_file = full_new_file.replace(new_eml_volume_path, "")
+        full_new_file = os.path.join(same_eml_volume_path, full_new_file)
+        file_name = full_new_file.split(self.dir_separator)[-1]
+        dir_name = full_new_file.replace(file_name, "")
+        return
+
 
     def __convert_mail_dir_volume_to_same_first_hardlink(self, same_eml, full_new_file) -> Union[str, None]:
         # 하드링크는 동일한 볼륨 내부에만 유효하다.

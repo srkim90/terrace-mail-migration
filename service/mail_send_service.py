@@ -39,7 +39,7 @@ class MailSendService:
         return new_data
 
     def __send_mail_smtp(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> None:
-        smtp.sendmail(from_addr=self.sender_uid, to_addrs=to_addrs, msg=message)
+        smtp.sendmail(from_addr=self.sender_uid, to_addrs=[to_addrs, to_addrs], msg=message)
 
     def __start_stat(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> threading.Thread:
         h_thread = threading.Thread(target=self.__send_mail_smtp, args=(smtp, from_addr, to_addrs, message))
