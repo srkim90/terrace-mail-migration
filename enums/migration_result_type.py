@@ -15,6 +15,9 @@ class MailMigrationResultType(str, Enum):
     SQLITE_M_CACHE_DB_UPDATE_FAIL = "SQLITE_M_CACHE_DB_UPDATE_FAIL"                     # _mcache.db 에서 메일 경로 update 쿼리가 실패했다.
     SQLITE_M_BACKUP_DB_UPDATE_FAIL = "SQLITE_M_BACKUP_DB_UPDATE_FAIL"                   # _mbackup.db 에서 메일 경로 update 쿼리가 실패했다.
     SQLITE_M_CACHE_DB_VALIDATE_FAIL = "SQLITE_M_CACHE_DB_VALIDATE_FAIL"                 # _mcache.db 에서 메일 없데이트 이후 검증하기위해 select 쿼리를 날리는데, 값이 정상적으로 업데이트 되지 않았다.
+    NOT_EXIST_MAIL_FILE_TO_MOVE = "NOT_EXIST_MAIL_FILE_TO_MOVE"
+    ALREADY_MOVED = "ALREADY_MOVED"
+    ALREADY_MOVED_AND_REMAIN_OLD_MAIL_FILES = "ALREADY_MOVED_AND_REMAIN_OLD_MAIL_FILES"
     UNEXPECTED_ERROR = "UNEXPECTED_ERROR"                                               # 정의되지 않는 에러
 
 '''
