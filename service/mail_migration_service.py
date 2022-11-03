@@ -103,12 +103,12 @@ class MailMigrationService:
                 continue
             avail_list.append([ratio, path, ])
             if max_ratio is None or ratio > max_ratio:
-                max_idxs = [idx,]
+                max_idxs = [idx, ]
                 max_ratio = ratio
             elif ratio == max_ratio:
                 max_idxs.append(idx)
             if min_ratio is None or ratio < min_ratio:
-                min_idxs = [idx,]
+                min_idxs = [idx, ]
                 min_ratio = ratio
             elif ratio == min_ratio:
                 min_idxs.append(idx)
@@ -164,7 +164,8 @@ class MailMigrationService:
         file_name = org_full_path.split(self.dir_separator)[-1]
         select_move_target_dir = self.__select_move_target_dir()
         m_data_subdir = self.__m_data_subdir_parser(org_full_path)
-        self.logger.debug("new_mdata_path: %s, select_move_target_dir: %s, m_data_subdir: %s" % (new_mdata_path, select_move_target_dir, m_data_subdir))
+        self.logger.debug("new_mdata_path: %s, select_move_target_dir: %s, m_data_subdir: %s" % (
+        new_mdata_path, select_move_target_dir, m_data_subdir))
         new_dir = os.path.join(select_move_target_dir, m_data_subdir)
         new_dir = os.path.join(new_mdata_path, new_dir)
         self.logger.debug("new_dir: %s" % (new_dir,))
@@ -175,10 +176,10 @@ class MailMigrationService:
             self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재합니다. : full_new_file=%s, %s" %
                               (full_new_file, self.__make_log_identify()))
             return None
-        #self.convert_mail_dir_volume_to_same_first_hardlink_test(full_new_file, full_new_file)
-        if len(mail.hardlinks) <= 1: # 하드링크 걸린 메일이 아니다.
+        # self.convert_mail_dir_volume_to_same_first_hardlink_test(full_new_file, full_new_file)
+        if len(mail.hardlinks) <= 1:  # 하드링크 걸린 메일이 아니다.
             shutil.copy2(org_full_path, full_new_file)
-        else: # 하드링크가 존재하는 메일이다.
+        else:  # 하드링크가 존재하는 메일이다.
             tmp_new_file = self.__handle_hardlink(mail, full_new_file)
             if tmp_new_file is not None:
                 full_new_file = tmp_new_file
@@ -200,7 +201,7 @@ class MailMigrationService:
         new_eml_volume_path = self.__get_move_target_volume_path(full_new_file)
         if same_eml_volume_path is None or new_eml_volume_path is None:
             return None
-        #if same_eml_volume_path == new_eml_volume_path:
+        # if same_eml_volume_path == new_eml_volume_path:
         #    return full_new_file
         full_new_file = full_new_file.replace(new_eml_volume_path, "")
         full_new_file = os.path.join(same_eml_volume_path, full_new_file)
@@ -208,10 +209,10 @@ class MailMigrationService:
         dir_name = full_new_file.replace(file_name, "")
         return
 
-
     def __convert_mail_dir_volume_to_same_first_hardlink(self, same_eml, full_new_file) -> Union[str, None]:
         # 하드링크는 동일한 볼륨 내부에만 유효하다.
         # 따라서 하드링크를 걸려는 메일의 파티션을 원본 메일과 동일하게 변경 해준다.
+        org_full_new_file = full_new_file
         same_eml_volume_path = self.__get_move_target_volume_path(same_eml)
         new_eml_volume_path = self.__get_move_target_volume_path(full_new_file)
         if same_eml_volume_path is None or new_eml_volume_path is None:
@@ -222,8 +223,13 @@ class MailMigrationService:
         full_new_file = os.path.join(same_eml_volume_path, full_new_file)
         file_name = full_new_file.split(self.dir_separator)[-1]
         dir_name = full_new_file.replace(file_name, "")
-        if os.path.exists(dir_name) is False:
-            os.makedirs(dir_name)
+        try:
+            if os.path.exists(dir_name) is False:
+                os.makedirs(dir_name)
+        except PermissionError:
+            self.logger.error("[__convert_mail_dir_volume_to_same_first_hardlink] same_eml: %s, full_new_file: %s, same_eml_volume_path: %s, new_eml_volume_path: %s, org_full_new_file: %s, file_name: %s" %
+                  (same_eml, full_new_file, same_eml_volume_path, new_eml_volume_path, org_full_new_file, file_name))
+            raise PermissionError
         return full_new_file
 
     def __handle_hardlink(self, mail: MailMessage, full_new_file: str) -> Union[str, None]:
@@ -260,7 +266,8 @@ class MailMigrationService:
             log_identify += " : %s" % message
         return log_identify
 
-    def __move_a_file(self, user: User, mail: MailMessage, sqlite: SqliteConnector) -> Tuple[bool, Union[str, None], Union[str, None], MailMigrationResultType]:
+    def __move_a_file(self, user: User, mail: MailMessage, sqlite: SqliteConnector) -> Tuple[
+        bool, Union[str, None], Union[str, None], MailMigrationResultType]:
         old_full_path = sqlite.get_mail_file_name_in_db(mail.folder_no, mail.uid_no)
         if old_full_path is None:
             self.migration_logging.inc_migration_fail_already_removed()
@@ -279,7 +286,7 @@ class MailMigrationService:
             self.migration_logging.inc_mail_delete_as_fail()
             return False, None, None, MailMigrationResultType.SQLITE_M_BACKUP_DB_UPDATE_FAIL
         else:
-            #os.remove(org_full_path) # commit 이후 삭제하도록 로직을 변경 하였다.
+            # os.remove(org_full_path) # commit 이후 삭제하도록 로직을 변경 하였다.
             sqlite.update_mbackup(mail.folder_no, mail.uid_no, new_full_path)
             self.migration_logging.inc_mail_delete()
             return True, org_full_path, new_full_path, MailMigrationResultType.SUCCESS
@@ -357,7 +364,8 @@ class MailMigrationService:
             check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)
             for rm_model in old_mails_to_delete:
                 if self.__final_check_and_delete_old_mail(rm_model, check_conn) is False:
-                    self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (print_user_info(company, user), rm_model.del_full_path))
+                    self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
+                    print_user_info(company, user), rm_model.del_full_path))
             check_conn.disconnect()
         else:
             self.logger.error("Fail to commit : %s" % print_user_info(company, user))
@@ -368,7 +376,7 @@ class MailMigrationService:
         return user_stat
 
     def __final_check_and_delete_old_mail(self, rm_model: MailRemoveModels, conn: SqliteConnector) -> bool:
-        #1. 존재하는지 확인
+        # 1. 존재하는지 확인
         if os.path.exists(rm_model.del_full_path) is False:
             self.logger.error("not exist mail to delete : %s" % (rm_model.del_full_path,))
             return False
@@ -377,14 +385,14 @@ class MailMigrationService:
             self.logger.error("not exist new mail : %s" % (rm_model.new_full_path,))
             return False
 
-        #2. DB 경로와 일치하는지 체크
+        # 2. DB 경로와 일치하는지 체크
         db_full_path = conn.get_mail_file_name_in_db(rm_model.folder_no, rm_model.uid_no)
         if self.__is_windows() is False:
             if os.path.samefile(db_full_path, rm_model.new_full_path) is False:
                 self.logger.error("not compare new mail with db : %s" % (rm_model.new_full_path,))
                 return False
 
-        #3. 제거 하려는 파일과 이관한 파일의 내용이 동일한지 확인 (설정에 따라 cksum, size 지원)
+        # 3. 제거 하려는 파일과 이관한 파일의 내용이 동일한지 확인 (설정에 따라 cksum, size 지원)
         if self.move_setting.final_check_method.lower() in ["md5sum", "cksum", "checksum"]:
             new_cksum = calc_file_hash(rm_model.new_full_path)
             del_cksum = calc_file_hash(rm_model.del_full_path)
@@ -392,7 +400,7 @@ class MailMigrationService:
                 self.logger.error("not compare checksum between new-mail and old-mail: %s, %s" %
                                   (rm_model.new_full_path, rm_model.del_full_path))
                 return False
-        elif self.move_setting.final_check_method.lower() in ["none", "null",]:
+        elif self.move_setting.final_check_method.lower() in ["none", "null", ]:
             pass
         else:
             new_size = os.stat(rm_model.new_full_path).st_size
@@ -402,7 +410,7 @@ class MailMigrationService:
                                   (rm_model.new_full_path, rm_model.del_full_path))
                 return False
 
-        #4. 테스트를 통과 하였다면, 원본 메일을 제거!
+        # 4. 테스트를 통과 하였다면, 원본 메일을 제거!
         os.remove(rm_model.del_full_path)
         self.logger.debug("delete mail : %s" % (rm_model.del_full_path,))
         return True

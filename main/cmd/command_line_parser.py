@@ -123,7 +123,7 @@ def read_sender_options() -> SenderCommandOptions:
         count = opts.count
         to_all = opts.all
         mail_to: str = opts.mail_to
-        if to_all is "true":
+        if to_all == "true":
             to_all = True
         else:
             to_all = False
