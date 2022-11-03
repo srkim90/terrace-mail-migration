@@ -89,6 +89,12 @@ class MailMigrationService:
         return (1.0 - (free / size)) * 100.0
 
     def __select_move_target_dir(self) -> str:
+        val = self.__select_move_target_dir_in()
+        strategy: MoveStrategyType = self.move_setting.move_strategy
+        self.logger.info("__select_move_target_dir: %s, strategy: %s" % (val, strategy.name))
+        return val
+
+    def __select_move_target_dir_in(self) -> str:
         threshold_ratio = self.move_setting.partition_capacity_threshold_ratio
         strategy: MoveStrategyType = self.move_setting.move_strategy
         avail_list = []
@@ -267,7 +273,7 @@ class MailMigrationService:
         try:
             same_eml = self.inode_checker[mail.st_ino]
         except KeyError:
-            # 하드링크가 존재하지 않는다.
+            # 하드링크가 존재하지 않는다. (동일 하드링크에 대해 처음 이관 하는 메일이다.)
             shutil.copy2(org_full_path, full_new_file)
             self.inode_checker[mail.st_ino] = full_new_file
             return None
