@@ -91,7 +91,7 @@ class MailMigrationService:
     def __select_move_target_dir(self) -> str:
         val = self.__select_move_target_dir_in()
         strategy: MoveStrategyType = self.move_setting.move_strategy
-        self.logger.info("__select_move_target_dir: %s, strategy: %s" % (val, strategy.name))
+        self.logger.debug("__select_move_target_dir: %s, strategy: %s" % (val, strategy.name))
         return val
 
     def __select_move_target_dir_in(self) -> str:
