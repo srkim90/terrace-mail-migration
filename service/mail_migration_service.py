@@ -220,6 +220,8 @@ class MailMigrationService:
         if same_eml_volume_path == new_eml_volume_path:
             return full_new_file
         full_new_file = full_new_file.replace(new_eml_volume_path, "")
+        if full_new_file[0] == self.dir_separator:
+            full_new_file = full_new_file[1:]
         full_new_file = os.path.join(same_eml_volume_path, full_new_file)
         file_name = full_new_file.split(self.dir_separator)[-1]
         dir_name = full_new_file.replace(file_name, "")
@@ -227,8 +229,8 @@ class MailMigrationService:
             if os.path.exists(dir_name) is False:
                 os.makedirs(dir_name)
         except PermissionError:
-            self.logger.error("[__convert_mail_dir_volume_to_same_first_hardlink] same_eml: %s, full_new_file: %s, same_eml_volume_path: %s, new_eml_volume_path: %s, org_full_new_file: %s, file_name: %s" %
-                  (same_eml, full_new_file, same_eml_volume_path, new_eml_volume_path, org_full_new_file, file_name))
+            self.logger.error("[__convert_mail_dir_volume_to_same_first_hardlink] same_eml: %s, full_new_file: %s, same_eml_volume_path: %s, new_eml_volume_path: %s, org_full_new_file: %s, file_name: %s, dir_name:%s" %
+                  (same_eml, full_new_file, same_eml_volume_path, new_eml_volume_path, org_full_new_file, file_name, dir_name))
             raise PermissionError
         return full_new_file
 
