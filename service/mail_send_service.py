@@ -39,7 +39,7 @@ class MailSendService:
         return new_data
 
     def __send_mail_smtp(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> None:
-        smtp.sendmail(from_addr=self.sender_uid, to_addrs=[to_addrs, to_addrs], msg=message)
+        smtp.sendmail(from_addr=self.sender_uid, to_addrs=to_addrs, msg=message)
 
     def __start_stat(self, smtp:smtplib.SMTP, from_addr: str, to_addrs: str, message:bytes) -> threading.Thread:
         h_thread = threading.Thread(target=self.__send_mail_smtp, args=(smtp, from_addr, to_addrs, message))
@@ -47,7 +47,7 @@ class MailSendService:
         h_thread.start()
         return h_thread
 
-    def send_mail(self, receiver_addrs: Union[str, List[str]], mail_paths: Union[str, List[str]]):
+    def send_mail(self, receiver_addrs: Union[str, List[str]], mail_paths: Union[str, List[str]], to_all: bool):
         if type(mail_paths) == str:
             mail_paths = [mail_paths, ]
         if len(mail_paths) == 0:
@@ -66,7 +66,10 @@ class MailSendService:
             message = self.read_qs(mail_path)
             rr_idx = idx % len(receiver_addrs)
             #smtp.sendmail(from_addr=self.sender_uid, to_addrs=receiver_addrs[rr_idx], msg=message)
-            t_threads.append(self.__start_stat(smtp, self.sender_uid, receiver_addrs[rr_idx], message))
+            receiver_addr_at = receiver_addrs[rr_idx]
+            if to_all is True:
+                receiver_addr_at = receiver_addrs
+            t_threads.append(self.__start_stat(smtp, self.sender_uid, receiver_addr_at, message))
             remain = len(mail_paths) - (idx + 1)
             print("send mail : [%d/%d] %s" % (idx, len(mail_paths), mail_path))
             n_send_mails += 1
@@ -107,14 +110,14 @@ class MailSendService:
         return result
 
 
-def send_all(mail_to: Union[str, List[str]], n_send_mail: int = -1):
+def send_all(mail_to: Union[str, List[str]], to_all: bool, n_send_mail: int = -1):
     e = MailSendService("127.0.0.1", 25, "srkim@abctest.co.co", "port2093@")
     mail_list = e.load_mail_data(n_send_mail)
-    e.send_mail(mail_to, mail_list)
+    e.send_mail(mail_to, mail_list, to_all)
     return
 
 
 if __name__ == "__main__":
     mail_to = "srkim@abctest.co.co"
     n_send_mail = 10
-    send_all(mail_to, n_send_mail)
+    send_all(mail_to, False, n_send_mail)

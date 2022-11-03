@@ -116,11 +116,17 @@ def read_sender_options() -> SenderCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
     parser.add_argument("-c", "--count", help="(OPTIONAL) 보낼 메일 수")
+    parser.add_argument("-a", "--all", help="(OPTIONAL) 모두보내기 여부")
     parser.add_argument("-t", "--mail-to", help="(MANDATORY) 메일 받을 이메일 계정 ex> aaa@srkim.kr,bbb@srkim.kr")
     try:
         opts = parser.parse_args(args)
         count = opts.count
+        to_all = opts.all
         mail_to: str = opts.mail_to
+        if to_all is "true":
+            to_all = True
+        else:
+            to_all = False
         mail_to_list: List[str] = mail_to.replace("[", "").replace("]", ""). \
             replace('"', "").replace("'", "").\
             replace('\n', "").replace("\t", "").replace(" ", "").split(",")
@@ -130,7 +136,8 @@ def read_sender_options() -> SenderCommandOptions:
             count = int(opts.count)
         return SenderCommandOptions(
             n_send_mail=count,
-            mail_to=mail_to_list
+            mail_to=mail_to_list,
+            to_all=to_all
         )
     except Exception as e:
         print("Error : %s" % e)
