@@ -90,6 +90,8 @@ def save_company_migration_report_as_json(result: CompanyMigrationResult, save_p
 #    #json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")
 #    with open(file_name, "wb") as fd:
 #        fd.write(json_data)
+    dict_data = CompanyMigrationResult.to_dict(result)
+    del result
     with open(file_name, "w") as fd:
-        json.dump(result, fd, indent=4, ensure_ascii=False)
+        json.dump(dict_data, fd, indent=4, ensure_ascii=False)
     return file_name
