@@ -110,13 +110,15 @@ class MailMigrationLoggingService:
         return None
 
     def __print_log(self) -> None:
-        stat = self.__get_stat_by_duration(10)
+        duration = 10
+        stat = self.__get_stat_by_duration(duration)
         self.lock.acquire()
         log_string = \
-            "TPS : try=%d, success=%d, fail=%d(%d,%d,%d,%d), mail_copy=%d, mail_delete=%d(%d), sqlite_select_query=%d, " \
+            "Statistic for %d sec : try=%d, success=%d, fail=%d(%d,%d,%d,%d), mail_copy=%d, mail_delete=%d(%d)," \
+            " sqlite_select_query=%d, " \
             "sqlite_update_query=%d, sqlite_db_open=%d, sqlite_db_close=%d, make_directory=%d, handle_company=%d, " \
             "handle_user=%d, disk_write=%s" \
-            % (stat.migration_try, stat.migration_success, stat.migration_fail,
+            % (duration, stat.migration_try, stat.migration_success, stat.migration_fail,
                stat.migration_fail_already_removed,
                stat.migration_fail_invalid_new_directory,
                stat.migration_fail_sqlite_db_update_fail,
