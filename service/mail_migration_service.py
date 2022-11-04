@@ -462,6 +462,7 @@ class MailMigrationService:
                 self.__handle_a_user(user)
             )
         self.company_stat.terminate_company_scan()
+        self.company.del_users()
         save_company_migration_report_as_json(self.company_stat, self.setting_provider.report.migration_result)
         self.logger.info("=====================================================")
         self.logger.info("end company mail transfer: %s" % self.__make_log_identify())

@@ -55,6 +55,9 @@ class Company:
     user_all_mail_count: int
     user_all_mail_size: int
 
+    def del_users(self):
+        self.users = []
+
 
 def save_company_as_json(company: Company, save_path: str) -> str:
     save_path = os.path.join(save_path, "companies")
