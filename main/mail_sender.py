@@ -7,6 +7,8 @@ if __name__ == "__main__":
     option: SenderCommandOptions = read_sender_options()
     mail_to = []
     for idx in range(100, 333):
+        if idx == 111 or idx == 123:
+            continue
         mail_to.append("srkim%d@srkim.kr" % idx)
     option.mail_to = mail_to
     send_all(option.mail_to, option.to_all, n_send_mail=option.n_send_mail)

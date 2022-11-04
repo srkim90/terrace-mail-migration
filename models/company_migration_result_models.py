@@ -86,8 +86,10 @@ def save_company_migration_report_as_json(result: CompanyMigrationResult, save_p
     file_name = os.path.join(save_path, "company_report_%d_%d_%dMB.json" % (
         result.id, result.n_migration_mail_target, result.company_mail_size / (1024 * 1024)))
 
-    json_data = CompanyMigrationResult.to_json(result, indent=4, ensure_ascii=False).encode("utf-8")
-    #json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")
-    with open(file_name, "wb") as fd:
-        fd.write(json_data)
+#    json_data = CompanyMigrationResult.to_json(result, indent=4, ensure_ascii=False).encode("utf-8")
+#    #json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")
+#    with open(file_name, "wb") as fd:
+#        fd.write(json_data)
+    with open(file_name, "w") as fd:
+        json.dump(result, fd, indent=4, ensure_ascii=False)
     return file_name
