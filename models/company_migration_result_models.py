@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Dict, Union
 
 from dataclasses import dataclass, field
@@ -69,10 +69,20 @@ class CompanyMigrationResult:
             else:
                 self.n_migration_mail_fail += 1
 
+
 def get_g_start_up_time():
     return g_start_up_time
 
-g_start_up_time=None
+
+def json_serial(obj) -> str:
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
+
+
+g_start_up_time = None
+
+
 def save_company_migration_report_as_json(result: CompanyMigrationResult, save_path: str) -> str:
     global g_start_up_time
     if g_start_up_time is None:
@@ -86,12 +96,12 @@ def save_company_migration_report_as_json(result: CompanyMigrationResult, save_p
     file_name = os.path.join(save_path, "company_report_%d_%d_%dMB.json" % (
         result.id, result.n_migration_mail_target, result.company_mail_size / (1024 * 1024)))
 
-#    json_data = CompanyMigrationResult.to_json(result, indent=4, ensure_ascii=False).encode("utf-8")
-#    #json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")
-#    with open(file_name, "wb") as fd:
-#        fd.write(json_data)
+    #    json_data = CompanyMigrationResult.to_json(result, indent=4, ensure_ascii=False).encode("utf-8")
+    #    #json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")
+    #    with open(file_name, "wb") as fd:
+    #        fd.write(json_data)
     dict_data = CompanyMigrationResult.to_dict(result)
     del result
     with open(file_name, "w") as fd:
-        json.dump(dict_data, fd, indent=4, ensure_ascii=False)
+        json.dump(dict_data, fd, indent=4, ensure_ascii=False, default=json_serial)
     return file_name
