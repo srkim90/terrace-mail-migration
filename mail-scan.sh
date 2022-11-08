@@ -59,7 +59,7 @@ main() {
     fi
     echo "path of yml file : ${YML_PATH}"
     if [ "$1" == "" ]; then
-        execute_python
+        execute_python --application-yml-path=$YML_PATH
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" == "" ]; then
         SAVE_DIRECTORY="--scan-data-save-directory=$1"
         COMPANY_ID="--company-id=${2}"
