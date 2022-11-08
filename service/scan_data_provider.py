@@ -31,6 +31,7 @@ class ScanDataProvider:
 
 
     def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
+        self.logger.info("target company_ids : %s" % (company_ids,))
         report_path = os.path.join(os.path.join(self.property.report_path, tag))
         for file_name in os.listdir(report_path):
             if company_ids is not None and file_name not in company_ids:
