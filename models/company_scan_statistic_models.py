@@ -113,7 +113,7 @@ def update_statistic(stat: ScanStatistic, company: Company):
     stat.company_hardlink_mail_unique_size += company.company_hardlink_mail_unique_size
     stat.not_exist_user_in_pgsql += company.not_exist_user_in_pgsql
     stat.not_exist_user_in_sqlite += company.not_exist_user_in_sqlite
-    stat.available_user_count += len(company.users) - company.empty_mail_box_user_count
+    stat.available_user_count += len(company.users)# - company.empty_mail_box_user_count
     stat.empty_mail_box_user_count += company.empty_mail_box_user_count
     stat.source_path_not_match_mails += company.source_path_not_match_mails
     stat.user_all_mail_count += company.user_all_mail_count
