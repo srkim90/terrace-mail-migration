@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 from dataclasses_json import dataclass_json, config
 from marshmallow import fields
@@ -47,7 +47,7 @@ class Company:
     company_hardlink_mail_size: int          # F : 회사의 하드 링크가 있는 메일의 중복을 포함한 용량
     company_non_link_mail_size: int          # G : 회사의 하드 링크가 없는 메일의 용량
     company_hardlink_mail_unique_size: int   # H : 회사의 하드 링크가 있는 메일의 중복을 제외한 용량
-    users: List[User]
+    users: List[str] #Union[List[User], List[str]]
     empty_mail_box_user_count: int
     not_exist_user_in_pgsql: int
     not_exist_user_in_sqlite: int
@@ -60,7 +60,7 @@ class Company:
 
 
 def save_company_as_json(company: Company, save_path: str) -> str:
-    save_path = os.path.join(save_path, "companies")
+    save_path = os.path.join(save_path, "%d" % (company.id,))
     if os.path.exists(save_path) is False:
         try:
             os.makedirs(save_path)

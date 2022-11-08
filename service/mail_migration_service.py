@@ -13,10 +13,11 @@ from models.company_models import Company
 from models.mail_migration_result_models import MailMigrationResult
 from models.mail_models import MailMessage
 from models.mail_remove_models import MailRemoveModels
-from models.user_migration_result_models import UserMigrationResult
+from models.user_migration_result_models import UserMigrationResult, save_user_migration_report_as_json
 from models.user_models import User
 from service.logging_service import LoggingService
 from service.mail_migration_logging_service import MailMigrationLoggingService
+from service.pgsql_scaner_service import PostgresqlSqlScanner
 from service.property_provider_service import ApplicationSettings, application_container
 from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
@@ -61,8 +62,8 @@ class MailMigrationService:
             n_migration_mail_fail=0,
             user_result_type_classify={},
             mail_result_type_classify={},
-            company_mail_size=self.company.company_mail_size,
-            results=[]
+            company_mail_size=self.company.company_mail_size
+            #results=[]
         )
 
     def __is_windows(self) -> bool:
@@ -448,19 +449,25 @@ class MailMigrationService:
         self.logger.debug("delete mail : %s" % (rm_model.del_full_path,))
         return True
 
+    def __save_user_migration_result(self, user: User, result: UserMigrationResult):
+        save_user_migration_report_as_json(result, self.setting_provider.report.migration_result, self.company.id)
+
     def run(self, user_ids: Union[List[int], None] = None) -> CompanyMigrationResult:
         self.logger.info("=====================================================")
         self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
-        for idx, user in enumerate(self.company.users):
+        for idx, user_json_path in enumerate(self.company.users):
             if get_stop_flags() is True:
                 self.logger.info("Stop mail migration - stop signal detected! : company=%d, remain-users=%d" %
                                  (self.company.id, len(self.company.users) - idx))
                 break
+            user = PostgresqlSqlScanner.load_user_json_data(user_json_path, self.logger)
+            if user is None:
+                continue
             if user_ids is not None and user.id not in user_ids:
                 continue
-            self.company_stat.update_company_scan_result(
-                self.__handle_a_user(user)
-            )
+            result: UserMigrationResult = self.__handle_a_user(user)
+            self.company_stat.update_company_scan_result(result)
+            self.__save_user_migration_result(user, result)
         self.company_stat.terminate_company_scan()
         self.company.del_users()
         save_company_migration_report_as_json(self.company_stat, self.setting_provider.report.migration_result)

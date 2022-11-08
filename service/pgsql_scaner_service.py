@@ -34,6 +34,36 @@ class PostgresqlSqlScanner:
         self.lock = threading.Semaphore(1)
         self.report_path = self.__select_report_path(report_path)
 
+    def __save_user_json(self, user: User, json_full_path: str):
+        json_data = User.to_json(user, indent=4, ensure_ascii=False).encode("utf-8")
+        with open(json_full_path, "wb") as fd:
+            fd.write(json_data)
+        return json_full_path
+
+    def __get_user_json_path(self, company: Company, user: User, save: bool) -> str:
+        user_json_path = os.path.join(self.report_path, "%d" % (company.id,))
+        self.lock.acquire()
+        if os.path.exists(user_json_path) is False:
+            try:
+                os.makedirs(user_json_path)
+            except FileExistsError as e:
+                pass
+        self.lock.release()
+        json_full_path = os.path.join(user_json_path, "user_%d.json" % (user.id,))
+        if save is True:
+            self.__save_user_json(user, json_full_path)
+        return json_full_path
+
+    @staticmethod
+    def load_user_json_data(json_full_path: str, logger) -> Union[User, None]:
+        if type(json_full_path) != str:
+            return None
+        if os.path.exists(json_full_path) is False:
+            logger.error("Error. Cannot find user json file : %s" % (json_full_path,))
+            return None
+        with open(json_full_path, "rb") as fd:
+            return User.from_json(fd.read())
+
     def __select_report_path(self, report_path: Union[str, None]) -> str:
         if type(report_path) is not str:
             report_path = os.path.join(self.report.report_path, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
@@ -177,8 +207,9 @@ class PostgresqlSqlScanner:
         return new_message
 
     def __add_mail_count_info(self, company: Company, days: Days) -> Company:
-        existing_users: List[User] = []
-        for user in company.users:
+        existing_users: List[str] = []
+        for basic_user in company.users:
+            user: User = basic_user
             mindex_path = self.__make_mindex_path(user)
             # if os.path.exists(mindex_path) is False:
             #     continue -> 함수안에서 파일 존재 여부 체크 처리
@@ -190,13 +221,16 @@ class PostgresqlSqlScanner:
                 continue
             user.user_mail_count, user.user_mail_size = sqlite.get_target_mail_count(days)
             user.user_all_mail_count, user.user_all_mail_size = sqlite.get_target_mail_count(None)
-            existing_users.append(user)
+
 
             self.logger.minor("company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
                 company.name, user.name, user.login_id, user.user_mail_count, user.user_mail_size))
             if user.user_mail_count == 0:
                 company.empty_mail_box_user_count += 1
                 continue
+
+            user_json_name = self.__get_user_json_path(company, user, False)
+            existing_users.append(user_json_name)
 
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
             new_messages: List[MailMessage] = []
@@ -224,6 +258,8 @@ class PostgresqlSqlScanner:
             company.user_all_mail_count += user.user_all_mail_count
             company.user_all_mail_size += user.user_all_mail_size
 
+            self.__get_user_json_path(company, user, True)
+
         company.users = existing_users
 
         return company
@@ -233,7 +269,10 @@ class PostgresqlSqlScanner:
         if self.setting_provider.move_setting.enable_hardlink is False:
             return company
         node_dict: Dict[int, List[MailMessage]] = {}
-        for user in company.users:
+        for user_path in company.users:
+            user = self.load_user_json_data(user_path, self.logger)
+            if user is None:
+                continue
             # step.1 : 모든 사용자를 대상으로 inode 별 dict을 만든다.
             for mail in user.messages:
                 inode = mail.st_ino
@@ -241,13 +280,20 @@ class PostgresqlSqlScanner:
                     node_dict[inode].append(mail)
                 except KeyError:
                     node_dict[inode] = [mail]
-        for user in company.users:
+        for user_path in company.users:
+            if type(user_path) == str:
+                user = self.load_user_json_data(user_path, self.logger)
+            else:
+                user = user_path
+            if user is None:
+                continue
             for mail in user.messages:
                 inode = mail.st_ino
                 for other_mail in node_dict[inode]: # 각 개별메일에서 하드링크 카운트 및 목록을 업데이트 해준다.
                     if other_mail.full_path not in mail.hardlinks:
                         mail.hardlinks.append(other_mail.full_path)
                 mail.hardlink_count = len(mail.hardlinks)
+            self.__save_user_json(user, user_path)
         # step.2 : company객체에 통계 정보를 업데이트 해준다.
         for inode in node_dict.keys():
             for idx, mail in enumerate(node_dict[inode]):
@@ -315,6 +361,7 @@ class PostgresqlSqlScanner:
             if val is None or get_stop_flags() is True:
                 break
             company, idx = val
+            company: Company
             start: float = time.time()
             json_file_name = None
             company = self.__add_mail_count_info(company, days)

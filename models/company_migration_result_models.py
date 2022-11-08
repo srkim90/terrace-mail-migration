@@ -42,7 +42,8 @@ class CompanyMigrationResult:
     user_result_type_classify: Dict[str, int]
     mail_result_type_classify: Dict[str, int]
     company_mail_size: int
-    results: List[UserMigrationResult]
+
+    # results: List[UserMigrationResult]
 
     @staticmethod
     def __inc_classify(classify_dict: Dict[str, int], item_name) -> None:
@@ -56,7 +57,7 @@ class CompanyMigrationResult:
         self.time_consuming = (self.end_at - self.start_at).seconds
 
     def update_company_scan_result(self, user_report: UserMigrationResult) -> None:
-        self.results.append(user_report)
+        # self.results.append(user_report)
         self.__inc_classify(self.user_result_type_classify, user_report.result.name)
         if user_report.result == UserMigrationResultType.SUCCESS:
             self.n_migration_user_success += 1
@@ -83,11 +84,15 @@ def json_serial(obj) -> str:
 g_start_up_time = None
 
 
-def save_company_migration_report_as_json(result: CompanyMigrationResult, save_path: str) -> str:
+def get_migration_start_up_time():
     global g_start_up_time
     if g_start_up_time is None:
         g_start_up_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_path = os.path.join(save_path, g_start_up_time, "companies")
+    return g_start_up_time
+
+
+def save_company_migration_report_as_json(result: CompanyMigrationResult, save_path: str) -> str:
+    save_path = os.path.join(save_path, get_migration_start_up_time(), "%d" % result.id)
     if os.path.exists(save_path) is False:
         try:
             os.makedirs(save_path)
@@ -101,7 +106,9 @@ def save_company_migration_report_as_json(result: CompanyMigrationResult, save_p
     #    with open(file_name, "wb") as fd:
     #        fd.write(json_data)
     dict_data = CompanyMigrationResult.to_dict(result)
+    # except UnicodeEncodeError as e:
+    #     dict_data = CompanyMigrationResult.to_dict(result).encode("cp949")
     del result
-    with open(file_name, "w") as fd:
+    with open(file_name, "w", encoding='UTF-8') as fd:
         json.dump(dict_data, fd, indent=4, ensure_ascii=False, default=json_serial)
     return file_name

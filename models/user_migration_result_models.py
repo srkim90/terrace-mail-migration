@@ -1,4 +1,5 @@
-
+import json
+import os
 from datetime import datetime
 from typing import List, Dict, Union
 
@@ -48,3 +49,18 @@ class UserMigrationResult:
         self.time_commit_consuming = float((self.commit_end_at - self.commit_start_at).microseconds / (1000.0*1000.0))
         self.end_at = datetime.now()
         self.time_consuming = float((self.end_at - self.start_at).microseconds / (1000.0*1000.0))
+
+def save_user_migration_report_as_json(result: UserMigrationResult, save_path: str, company_id: int) -> str:
+    from models.company_migration_result_models import get_migration_start_up_time, json_serial
+    save_path = os.path.join(save_path, get_migration_start_up_time(), "%d" % company_id)
+    if os.path.exists(save_path) is False:
+        try:
+            os.makedirs(save_path)
+        except FileExistsError as e:
+            pass
+    file_name = os.path.join(save_path, "%d.json" % (result.id,))
+
+    dict_data = UserMigrationResult.to_dict(result)
+    with open(file_name, "w", encoding='UTF-8') as fd:
+        json.dump(dict_data, fd, indent=4, ensure_ascii=False, default=json_serial)
+    return file_name

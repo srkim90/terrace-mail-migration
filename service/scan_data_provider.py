@@ -14,17 +14,30 @@ class ScanDataProvider:
         super().__init__()
         self.property: ReportSettings = self.setting_provider.report
 
-    def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
-        report_path = os.path.join(os.path.join(self.property.report_path, tag, "companies"))
-        for file_name in os.listdir(report_path):
-            full_path = os.path.join(report_path, file_name)
-            if full_path.split(".")[-1].lower() != "json":
+    def __get_company_json_name(self, full_path: str) -> Union[str, None]:
+        if os.path.isdir(full_path) is False:
+            return None
+        for file_name in os.listdir(full_path):
+            if file_name.split(".")[-1].lower() != "json":
                 continue
-            try:
-                __company_id = int(file_name.split("company_report_")[1].split("_")[0])
-            except Exception as e:
-                continue # report 파일 이름이 유효하지 않다.
-            if company_ids is not None and __company_id not in company_ids:
+            if 'company_report' not in file_name:
+                continue
+            # try:
+            #     __company_id = int(file_name.split("company_report_")[1].split("_")[0])
+            # except Exception as e:
+            #     continue  # report 파일 이름이 유효하지 않다.
+            return os.path.join(full_path, file_name)
+        return None
+
+
+    def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
+        report_path = os.path.join(os.path.join(self.property.report_path, tag))
+        for file_name in os.listdir(report_path):
+            if company_ids is not None and file_name not in company_ids:
+                continue
+            full_path = os.path.join(report_path, file_name)
+            full_path = self.__get_company_json_name(full_path)
+            if full_path is None:
                 continue
             try:
                 company = load_company_from_json(full_path)
