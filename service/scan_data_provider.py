@@ -30,11 +30,20 @@ class ScanDataProvider:
         return None
 
 
+    def __check_company_id_in_check_list(self, file_name: str, company_ids: List[int]) -> bool:
+        if company_ids is None:
+            return True
+        for company_id in company_ids:
+            str_id = "%s" % company_id
+            if str_id == file_name:
+                return True
+        return False
+
     def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
         self.logger.info("target company_ids : %s" % (company_ids,))
         report_path = os.path.join(os.path.join(self.property.report_path, tag))
         for file_name in os.listdir(report_path):
-            if company_ids is not None and "%d" % company_ids != file_name:
+            if self.__check_company_id_in_check_list(file_name, company_ids) is False:
                 continue
             full_path = os.path.join(report_path, file_name)
             full_path = self.__get_company_json_name(full_path)
