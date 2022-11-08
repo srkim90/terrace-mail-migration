@@ -66,7 +66,7 @@ main() {
         TARGET_SCAN_DATA=${1}
         execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA --company-id=$COMPANY_ID
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" != "" ]; then
-        USER_ID="--user-id=${3}"
+        USER_ID="${3}"
         COMPANY_ID="${2}"
         TARGET_SCAN_DATA=${1}
         execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA --user-id=$USER_ID --company-id=$COMPANY_ID
