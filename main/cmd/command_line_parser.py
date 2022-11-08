@@ -80,6 +80,13 @@ def read_scan_options() -> ScanCommandOptions:
     try:
         scan_range = None
         opts = parser.parse_args(args)
+        print("argument : --application-yml-path='%s', --company-id='%s', --start-day='%s', --end-day='%s', --scan-data-save-directory=%s",
+              opts.application_yml_path,
+              opts.company_id,
+              opts.start_day,
+              opts.end_day,
+              opts.scan_data_save_directory
+              )
         end_day = opts.end_day
         start_day = opts.start_day
         if end_day is not None:
@@ -162,6 +169,12 @@ def read_migration_options(test_date: str = Union[None, str]) -> MigrationComman
                         help="(OPTIONAL) application.yml 파일의 경로, 없을 경우 자동으로 찾는다.")
     try:
         opts = parser.parse_args(args)
+        print("argument : --target-scan-data='%s', --company-id='%s', --user-id='%s', --application-yml-path='%s'",
+              opts.target_scan_data,
+              opts.company_id,
+              opts.user_id,
+              opts.application_yml_path)
+
         target_scan_data = opts.target_scan_data
         if target_scan_data is None and is_windows() is True:
             target_scan_data = test_date
