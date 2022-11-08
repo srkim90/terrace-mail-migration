@@ -34,7 +34,7 @@ class ScanDataProvider:
         self.logger.info("target company_ids : %s" % (company_ids,))
         report_path = os.path.join(os.path.join(self.property.report_path, tag))
         for file_name in os.listdir(report_path):
-            if company_ids is not None and file_name not in company_ids:
+            if company_ids is not None and "%d" % company_ids != file_name:
                 continue
             full_path = os.path.join(report_path, file_name)
             full_path = self.__get_company_json_name(full_path)
