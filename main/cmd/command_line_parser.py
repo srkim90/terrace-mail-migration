@@ -26,6 +26,8 @@ def validate_application_yml_path(yml_file_name: Union[str, None]) -> None:
 
 def parser_list(value: Union[str, None]) -> Union[List[int], None]:
     null_list = ["null", "none", "empty", "no", "n", "not"]
+    if "=" in value:
+        value = value.strip("=")[-1]
     if value is None:
         return None
     if value.lower() in null_list:
