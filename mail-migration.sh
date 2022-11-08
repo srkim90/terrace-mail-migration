@@ -64,15 +64,16 @@ main() {
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" == "" ]; then
         COMPANY_ID="--company-id=${2}"
         TARGET_SCAN_DATA=${1}
-        execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA $COMPANY_ID
+        execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA --company-id=$COMPANY_ID
     elif [ "$1" != "" ] && [ "$2" != "" ] && [ "$3" != "" ]; then
         USER_ID="--user-id=${3}"
         COMPANY_ID="--company-id=${2}"
         TARGET_SCAN_DATA=${1}
-        execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA $USER_ID $COMPANY_ID
+        execute_python --application-yml-path=$YML_PATH --target-scan-data=$TARGET_SCAN_DATA --user-id=$USER_ID --company-id=$COMPANY_ID
     else
         print_help
     fi
 }
+
 
 main $@
