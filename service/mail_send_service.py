@@ -47,6 +47,16 @@ class MailSendService:
         h_thread.start()
         return h_thread
 
+    def __mail_paths_add(self, receiver_addrs: Union[str, List[str]], mail_paths: Union[str, List[str]]):
+        if type(receiver_addrs) == list and type(mail_paths) == list:
+            ln_receivers = len(receiver_addrs)
+            ln_mails = len(mail_paths)
+            if ln_receivers > ln_mails:
+                shortage = ln_receivers - ln_mails
+                add_mail = mail_paths[0:shortage]
+                return mail_paths + add_mail
+        return mail_paths
+
     def send_mail(self, receiver_addrs: Union[str, List[str]], mail_paths: Union[str, List[str]], to_all: bool):
         if type(mail_paths) == str:
             mail_paths = [mail_paths, ]
@@ -55,6 +65,7 @@ class MailSendService:
             return
         if type(receiver_addrs) == str:
             receiver_addrs = [receiver_addrs,]
+        mail_paths = self.__mail_paths_add(receiver_addrs, mail_paths)
         smtps = [None] * self.max_thread
         t_threads = []
         n_send_mails = 0
