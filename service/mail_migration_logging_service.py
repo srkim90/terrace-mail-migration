@@ -67,6 +67,7 @@ class TransactionStatistic:
             return "%0.2fKB" % (float(io) / float(1024),)
         return "%dB" % (io,)
 
+g_stat_thread = None
 
 class MailMigrationLoggingService:
     global_scan_statistic: ScanStatistic = None
@@ -91,9 +92,12 @@ class MailMigrationLoggingService:
         ]
 
     def start_stat(self):
-        h_thread = threading.Thread(target=self.__stat_idle_proc)
-        h_thread.daemon = True
-        h_thread.start()
+        global g_stat_thread
+        if g_stat_thread is None:
+            h_thread = threading.Thread(target=self.__stat_idle_proc)
+            h_thread.daemon = True
+            h_thread.start()
+            g_stat_thread = h_thread
 
     def logging(self, log_str):
         if self.logger is None:
