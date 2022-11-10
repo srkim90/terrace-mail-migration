@@ -43,7 +43,7 @@ class SqliteConnector:
     def __db_conn(self, db_path: str, readonly: bool = True):
         if os.path.exists(self.db_path) is False:
             self.logger.minor("Not found sqlite db : path=%s info=(%s)" % (self.db_path, self.__make_log_identify()))
-            raise FileNotFoundError
+            raise FileNotFoundError("not exist sqlite db : %s" % (self.db_path, ))
         try:
             if readonly is True:
                 conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)

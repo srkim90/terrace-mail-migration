@@ -9,10 +9,12 @@ def make_noti_off_data() -> bytes:
     '''
     return json.dumps(json.loads(result.encode('utf-8'))).encode('utf-8')
 
-def make_data(user_name: str) -> bytes:
+def make_create_user_data(user_name: str) -> bytes:
+    password = '*daou3651'
     result: str = '''
-    {"name":"김성래","loginId":"%s","password":"port2093@","positionId":"","gradeId":"","status":"online","employeeNumber":"","locale":"ko","mailGroup":"default","mailAddQuota":"0","quotaWarningMode":"","quotaWarningRatio":"90","quotaViolationAction":"","quotaOverlookRatio":"10","webFolderAddQuota":"0","forwardingUse":"","forwardingMode":"none","mailSenderUse":"","sendAllowMode":"group","maxSendMailCountUse":"group","maxSendMailCount":"100","inboxExpireDays":"none","trashExpireDays":"none","spamExpireDays":"none","approvalPassword":"","approvalLevel":"10","hiddenForwardingMode":"off","mailExpireDate":"","userVirtualDomains":"","repUserEmail":"%s@srkim.kr","directTel":"","mobileNo":"","webmailUsed":true,"popUsed":true,"imapUsed":true,"smtpAuthUsed":true,"additions":{"enName":"","jpName":"","zhcnName":"","zhtwName":"","viName":""},"groupMembers":[],"deptMembers":[{"deptId":16901}],"attPhoto":null,"approvalAttPhoto":null,"alternateAddr":[],"alternateUserDomain":[],"forwardingAddr":[],"sendAllowAddr":[],"hiddenForwardingAddr":[],"mailSenders":[],"configs":[{"name":"useAbbroadIpCheck","value":"fasle","valueType":"boolean"},{"name":"otpService","value":"false","valueType":"boolean"}],"birthday":"","lunarCal":false}
-    ''' % (user_name, user_name)
+    
+    {"name":"김성래","loginId":"%s","password":"%s","positionId":"","gradeId":"","status":"online","employeeNumber":"","locale":"ko","mailGroup":"default","mailAddQuota":"0","quotaWarningMode":"","quotaWarningRatio":"90","quotaViolationAction":"","quotaOverlookRatio":"10","webFolderAddQuota":"0","forwardingUse":"","forwardingMode":"none","mailSenderUse":"","sendAllowMode":"group","maxSendMailCountUse":"group","maxSendMailCount":"100","inboxExpireDays":"none","trashExpireDays":"none","spamExpireDays":"none","approvalPassword":"","approvalLevel":"10","hiddenForwardingMode":"off","mailExpireDate":"","userVirtualDomains":"","repUserEmail":"%s@srkim.kr","directTel":"","mobileNo":"","webmailUsed":false,"popUsed":false,"imapUsed":false,"smtpAuthUsed":false,"additions":{"enName":"","jpName":"","zhcnName":"","zhtwName":"","viName":""},"groupMembers":[],"deptMembers":[{"deptId":16912}],"attPhoto":null,"approvalAttPhoto":null,"alternateAddr":[],"alternateUserDomain":[],"forwardingAddr":[],"sendAllowAddr":[],"hiddenForwardingAddr":[],"mailSenders":[],"configs":[{"name":"useAbbroadIpCheck","value":"false","valueType":"boolean"},{"name":"otpService","value":"false","valueType":"boolean"}],"birthday":"","lunarCal":false}
+    ''' % (user_name, password, user_name)
     return json.dumps(json.loads(result.encode('utf-8'))).encode('utf-8')
 
 
@@ -22,7 +24,7 @@ def notify_off(start_idx: int, n_count: int):
         uid = "srkim%d" % (idx,)
         sess = requests.session()
         result = sess.post(domaion + "/api/login",
-                           data=('{"username":"%s","password":"port2093@","captcha":"","returnUrl":""}'
+                           data=('{"username":"%s","password":"*daou3651","captcha":"","returnUrl":""}'
                                  % (uid,)).encode('utf-8'),
                            headers={"Content-Type": "application/json"})
         data = make_noti_off_data()
@@ -30,19 +32,21 @@ def notify_off(start_idx: int, n_count: int):
         print("idx=%d, status: %d, result.text=" % (idx, result.status_code,))
     return
 
-def create_users(start_idx: int, n_count: int):
+def create_users(start_idx: int, n_count: int, admin_uid: str, admon_pwd: str):
     domaion = "https://nstaging.daouoffice.com:8443"
     data = {}
     sess = requests.session()
     result = sess.post(domaion + "/go/ad/api/login",
-                       data=b'{"username":"srkim1000","password":"port2093@","returnUrl":""}',
+                       data=b'{"username":"%s","password":"%s","returnUrl":""}' % (admin_uid.encode('utf-8'), admon_pwd.encode('utf-8')),
                        headers={"Content-Type": "application/json"})
     for idx in range(n_count):
-        data = make_data("srkim%d" % (start_idx+idx,))
+        data = make_create_user_data("srkim%d" % (start_idx+idx,))
         result = sess.post(domaion + "/go/ad/api/user", data=data, headers={"Content-Type": "application/json"})
         print("status: %d, result.text=\n%s" % (result.status_code, result.text))
 
 
 if __name__ == "__main__":
-    create_users(3002, 2000)
-    notify_off(3002, 2000)
+    admin_uid = 'srkim25000'
+    admon_pwd = '*daou3651'
+    create_users(25004, 2000, admin_uid, admon_pwd)
+    notify_off(25004, 2000)

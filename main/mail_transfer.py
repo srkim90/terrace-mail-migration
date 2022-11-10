@@ -19,7 +19,7 @@ from utils.utills import set_property_path
 
 log = logging.getLogger(__name__)
 
-test_date = "20221108_170841"  # 윈도우에서만 유효!, 실전에선 명령행 파라미터로 받자!
+test_date = "20221110_151401"  # 윈도우에서만 유효!, 실전에선 명령행 파라미터로 받자!
 
 
 class MailMigrationLoader:

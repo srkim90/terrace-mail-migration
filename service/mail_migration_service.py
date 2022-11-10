@@ -4,6 +4,8 @@ import os
 import platform
 import random
 import shutil
+import threading
+import time
 from typing import Union, Tuple, List, Dict
 
 from enums.migration_result_type import UserMigrationResultType, MailMigrationResultType
@@ -24,6 +26,18 @@ from service.sqlite_connector_service import SqliteConnector
 from utils.utills import handle_userdata_if_windows, is_windows, str_stack_trace, print_user_info, calc_file_hash
 
 
+class ThreadInfo:
+    h_thread: threading.Thread
+    idx: int
+    is_end: bool
+
+    def __init__(self, h_thread: threading.Thread, idx: int, is_end: bool) -> None:
+        super().__init__()
+        self.h_thread = h_thread
+        self.idx = idx
+        self.is_end = is_end
+
+
 class MailMigrationService:
     inode_checker: Dict[int, str]
     company: Company
@@ -33,16 +47,21 @@ class MailMigrationService:
     migration_logging: MailMigrationLoggingService = application_container.migration_logging
     setting_provider: ApplicationSettings = application_container.setting_provider
     company_stat: CompanyMigrationResult
+    work_queue: Union[List[Tuple[User, int]], None]
 
     def __init__(self, company: Company) -> None:
         super().__init__()
         self.company = company
         self.is_window = None
+        self.lock = threading.Semaphore(1)
         self.dir_separator = "\\" if self.__is_windows() else "/"
         self.move_setting = self.setting_provider.move_setting
         self.migration_logging.start_stat()
         self.company_stat = self.__init_statistic()
         self.inode_checker = {}
+        self.ln_thread: int = 0
+        self.h_threads: List[ThreadInfo] = []
+        self.ln_max_threads = self.setting_provider.system.max_work_threads
 
     def __init_statistic(self) -> CompanyMigrationResult:
         return CompanyMigrationResult(
@@ -345,6 +364,46 @@ class MailMigrationService:
             commit_end_at=None,
         )
 
+    def __wait_for_user_threads(self) -> None:
+        for jdx, thread_info in enumerate(self.h_threads):
+            thread_info.h_thread.join()
+
+    def __run_user_th(self, user: User, idx: int, ln_users: int):
+        while True:
+            self.lock.acquire()
+            if self.ln_thread >= self.ln_max_threads:
+                self.lock.release()
+                time.sleep(0.25)
+                continue
+            for jdx, thread_info in enumerate(self.h_threads):
+                if thread_info.is_end is True:
+                    thread_info.h_thread.join()
+                    del self.h_threads[jdx]
+                    break
+            self.lock.release()
+            h_thread = threading.Thread(target=self.__handle_a_user_th, args=(user, idx, ln_users))
+            h_thread.daemon = True
+            h_thread.start()
+            self.lock.acquire()
+            self.h_threads.append(ThreadInfo(h_thread, idx, False))
+            self.lock.release()
+            break
+
+    def __handle_a_user_th(self, user: User, idx: int, ln_users: int) -> None:
+        self.lock.acquire()
+        self.ln_thread += 1
+        self.lock.release()
+        result = self.__handle_a_user(user)
+        self.lock.acquire()
+        self.company_stat.update_company_scan_result(result)
+        self.__save_user_migration_result(user, result)
+        self.ln_thread -= 1
+        for jdx, thread_info in enumerate(self.h_threads):
+            if thread_info.idx == idx:
+                thread_info.is_end = True
+                break
+        self.lock.release()
+
     def __handle_a_user(self, user: User) -> UserMigrationResult:
         user_stat = self.__init_user_statistic(user)
         company = self.company
@@ -358,7 +417,7 @@ class MailMigrationService:
             self.migration_logging.inc_sqlite_db_open()
         except Exception as e:
             self.logger.error("start user mail transfer error: %s, error-message=%s"
-                              % (self.__make_log_identify(user), e))
+                              % (self.__make_log_identify(user), str_stack_trace()))
             return user_stat
 
         for idx, mail in enumerate(user.messages):
@@ -465,9 +524,12 @@ class MailMigrationService:
                 continue
             if user_ids is not None and user.id not in user_ids:
                 continue
-            result: UserMigrationResult = self.__handle_a_user(user)
-            self.company_stat.update_company_scan_result(result)
-            self.__save_user_migration_result(user, result)
+            #result: UserMigrationResult = self.__handle_a_user(user)
+            #self.company_stat.update_company_scan_result(result)
+            #self.__save_user_migration_result(user, result)
+            #self.__handle_a_user_th(user)
+            self.__run_user_th(user, idx, len(self.company.users))
+        self.__wait_for_user_threads()
         self.company_stat.terminate_company_scan()
         self.company.del_users()
         save_company_migration_report_as_json(self.company_stat, self.setting_provider.report.migration_result)

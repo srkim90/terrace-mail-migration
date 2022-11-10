@@ -1,5 +1,6 @@
 system:
   max-work-threads: 12
+  max-migration-threads: 8
 report:
   report-path: /opt/mail-migration-data/report
   migration-result: /opt/mail-migration-data/migration-result

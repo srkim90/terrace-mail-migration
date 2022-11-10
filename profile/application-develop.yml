@@ -1,5 +1,6 @@
 system:
   max-work-threads: 12
+  max-migration-threads: 8
 report:
   report-path: D:\data\report
   migration-result: D:\data\migration-result
@@ -16,10 +17,10 @@ mail:
   move-strategy: REMAINING_CAPACITY_LOWER_PRIORITY # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
   path:
     mindex-path: D:\data\mindex\opt\TerraceTims\mindex # 스캔용도, 이관시에는 DB값 참조해서 찾는다.
-    #origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
-    #new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
-    origin-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
-    new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
+    origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
+    new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #origin-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
 database:
   postgresql:
     host: 172.22.1.103

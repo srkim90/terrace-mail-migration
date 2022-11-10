@@ -24,6 +24,7 @@ class DatabaseSettings:
 
 class SystemSettings:
     max_work_threads: int = get_property()["system"]["max-work-threads"]
+    max_migration_threads: int = get_property()["system"]["max-migration-threads"]
 
 
 class MailMoveSettings:
