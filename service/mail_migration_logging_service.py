@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
 from models.company_global_migration_result_models import CompanyGlobalMigrationResult
+from models.company_scan_statistic_models import ScanStatistic
 
 g_stop_flags = False
 
@@ -68,6 +69,7 @@ class TransactionStatistic:
 
 
 class MailMigrationLoggingService:
+    global_scan_statistic: ScanStatistic = None
     stat_permanent = TransactionStatistic()
     stat_10sec: TransactionStatistic = TransactionStatistic()
     stat_60sec: TransactionStatistic = TransactionStatistic()
@@ -111,14 +113,17 @@ class MailMigrationLoggingService:
 
     def __print_log(self) -> None:
         duration = 10
+        stat_permanent = self.__get_stat_by_duration(None)
         stat = self.__get_stat_by_duration(duration)
         self.lock.acquire()
+        # TPS
+        now_mail_cnt = "Total-mail=[%d/%d]" % (stat_permanent.migration_try, self.global_scan_statistic.company_mail_count)
         log_string = \
-            "Statistic for %d sec : try=%d, success=%d, fail=%d(%d,%d,%d,%d), mail_copy=%d, mail_delete=%d(%d)," \
+            "%s, Statistic for %d sec : try=%d, success=%d, fail=%d(%d,%d,%d,%d), mail_copy=%d, mail_delete=%d(%d)," \
             " sqlite_select_query=%d, " \
             "sqlite_update_query=%d, sqlite_db_open=%d, sqlite_db_close=%d, make_directory=%d, handle_company=%d, " \
             "handle_user=%d, disk_write=%s" \
-            % (duration, stat.migration_try, stat.migration_success, stat.migration_fail,
+            % (now_mail_cnt, duration, stat.migration_try, stat.migration_success, stat.migration_fail,
                stat.migration_fail_already_removed,
                stat.migration_fail_invalid_new_directory,
                stat.migration_fail_sqlite_db_update_fail,

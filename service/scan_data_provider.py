@@ -2,6 +2,7 @@ import os
 from typing import List, Union, Tuple
 
 from models.company_models import Company, load_company_from_json
+from models.company_scan_statistic_models import get_scan_stat_report_file_name, ScanStatistic, load_scan_stat_from_json
 from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
 
@@ -38,6 +39,13 @@ class ScanDataProvider:
             if str_id == file_name:
                 return True
         return False
+
+    def load_scan_statistic(self, tag: str) -> ScanStatistic:
+        stat_path = os.path.join(self.property.report_path, tag, get_scan_stat_report_file_name())
+        if os.path.exists(stat_path) is False:
+            raise FileNotFoundError("스캔 파일이 완벽하지 않습니다 (not exist : %s)" % (stat_path,))
+        return load_scan_stat_from_json(stat_path)
+
 
     def get_company_report_data(self, tag: str, company_ids: Union[List[int], None] = None) -> List[Tuple[Company, str]]:
         self.logger.info("target company_ids : %s" % (company_ids,))

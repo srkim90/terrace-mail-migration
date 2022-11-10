@@ -12,6 +12,7 @@ from enums.migration_result_type import UserMigrationResultType, MailMigrationRe
 from enums.move_strategy_type import MoveStrategyType
 from models.company_migration_result_models import CompanyMigrationResult, save_company_migration_report_as_json
 from models.company_models import Company
+from models.company_scan_statistic_models import ScanStatistic
 from models.mail_migration_result_models import MailMigrationResult
 from models.mail_models import MailMessage
 from models.mail_remove_models import MailRemoveModels
@@ -48,9 +49,12 @@ class MailMigrationService:
     setting_provider: ApplicationSettings = application_container.setting_provider
     company_stat: CompanyMigrationResult
     work_queue: Union[List[Tuple[User, int]], None]
+    total_handle_mails : int
 
-    def __init__(self, company: Company) -> None:
+    def __init__(self, total_handle_mails: int, now_idx: int, company: Company, global_scan_statistic: ScanStatistic) -> None:
         super().__init__()
+        self.total_handle_mails = total_handle_mails
+        self.now_idx = now_idx
         self.company = company
         self.is_window = None
         self.lock = threading.Semaphore(1)
@@ -62,6 +66,7 @@ class MailMigrationService:
         self.ln_thread: int = 0
         self.h_threads: List[ThreadInfo] = []
         self.ln_max_threads = self.setting_provider.system.max_work_threads
+        self.global_scan_statistic: ScanStatistic = global_scan_statistic
 
     def __init_statistic(self) -> CompanyMigrationResult:
         return CompanyMigrationResult(
@@ -512,8 +517,12 @@ class MailMigrationService:
         save_user_migration_report_as_json(result, self.setting_provider.report.migration_result, self.company.id)
 
     def run(self, user_ids: Union[List[int], None] = None) -> CompanyMigrationResult:
+        total_company_cnt = self.global_scan_statistic.available_company_count
+        total_mail_cnt = self.global_scan_statistic.company_mail_count
+        now_count = "company=[%d/%d], mail=[%d/%d]" % (self.now_idx, total_company_cnt, self.total_handle_mails, total_mail_cnt)
+        after_count = "company=[%d/%d], mail=[%d/%d]" % (self.now_idx + 1, total_company_cnt, self.total_handle_mails + self.company.company_mail_count, total_mail_cnt)
         self.logger.info("=====================================================")
-        self.logger.info("start company mail transfer: %s" % self.__make_log_identify())
+        self.logger.info("%s start company mail transfer: %s" % (now_count, self.__make_log_identify(),))
         for idx, user_json_path in enumerate(self.company.users):
             if get_stop_flags() is True:
                 self.logger.info("Stop mail migration - stop signal detected! : company=%d, remain-users=%d" %
@@ -534,6 +543,6 @@ class MailMigrationService:
         self.company.del_users()
         save_company_migration_report_as_json(self.company_stat, self.setting_provider.report.migration_result)
         self.logger.info("=====================================================")
-        self.logger.info("end company mail transfer: %s" % self.__make_log_identify())
+        self.logger.info("%s end company mail transfer: %s" % (after_count, self.__make_log_identify()))
         self.logger.info("=====================================================")
         return self.company_stat

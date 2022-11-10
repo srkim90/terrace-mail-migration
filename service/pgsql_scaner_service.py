@@ -366,10 +366,12 @@ class PostgresqlSqlScanner:
             json_file_name = None
             company = self.__add_mail_count_info(company, days)
             company = self.__add_mail_inode_info(company)
-            if len(company.users) != 0:
+            if len(company.users) > 0:
                 json_file_name = save_company_as_json(company, self.report_path)
             self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
+            self.lock.acquire()
             update_statistic(stat, company)
+            self.lock.release()
         return
 
     def __make_worker_ths(self, days: Days, company_counts: int, stat: ScanStatistic):
