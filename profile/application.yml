@@ -1,5 +1,5 @@
 system:
-  max-work-threads: 3
+  max-work-threads: 12
   max-work-process: 4
   max-migration-threads: 2
   max-migration-process: 4
