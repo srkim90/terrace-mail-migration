@@ -62,6 +62,15 @@ def read_date(date_str: str) -> Union[None, datetime.datetime]:
     return None
 
 
+def __parse_rr_index(value: str) -> int:
+    if value is None:
+        return -1
+    try:
+        return int(value)
+    except Exception as e:
+        return -1
+
+
 def read_scan_options() -> ScanCommandOptions:
     args = sys.argv[1:]
     parser = argparse.ArgumentParser(description="The parsing commands lists.")
@@ -76,17 +85,20 @@ def read_scan_options() -> ScanCommandOptions:
                         help="(OPTIONAL) 스캔 종료 일자")
     parser.add_argument("-d", "--scan-data-save-directory",
                         help="(OPTIONAL) 스캔 결과를 저장하는 디렉토리 지정, 입력하지 않을 경우 자동 생성")
+    parser.add_argument("-r", "--round-robin-index",
+                        help="(OPTIONAL) 멀티프로세스 기동 시 라운드로빈 인덱스")
     print_help(parser)
     try:
         scan_range = None
         opts = parser.parse_args(args)
         print("argument : --application-yml-path='%s', --company-id='%s', --start-day='%s', --end-day='%s', "
-              "--scan-data-save-directory=%s" %
+              "--scan-data-save-directory=%s, --round-robin-index=%s" %
               (opts.application_yml_path,
                opts.company_id,
                opts.start_day,
                opts.end_day,
-               opts.scan_data_save_directory))
+               opts.scan_data_save_directory,
+               opts.round_robin_index))
         end_day = opts.end_day
         start_day = opts.start_day
         if end_day is not None:
@@ -96,7 +108,8 @@ def read_scan_options() -> ScanCommandOptions:
             application_yml_path=validate_application_yml_path(opts.application_yml_path),
             target_company_ids=parser_list(opts.company_id),
             scan_range=scan_range,
-            scan_data_save_dir=opts.scan_data_save_directory
+            scan_data_save_dir=opts.scan_data_save_directory,
+            rr_index=__parse_rr_index(opts.round_robin_index),
         )
     except Exception as e:
         print("Error : %s" % e)
@@ -167,13 +180,19 @@ def read_migration_options(test_date: str = Union[None, str]) -> MigrationComman
                              "마이그레이션 수행")
     parser.add_argument("-p", "--application-yml-path",
                         help="(OPTIONAL) application.yml 파일의 경로, 없을 경우 자동으로 찾는다.")
+    parser.add_argument("-r", "--round-robin-index",
+                        help="(OPTIONAL) 멀티프로세스 기동 시 라운드로빈 인덱스")
+    parser.add_argument("-s", "--start-up-time",
+                        help="(OPTIONAL) 멀티프로세스 기동 시 최초 기동시간 (결과 파일 저장 위치로 활용)")
     try:
         opts = parser.parse_args(args)
-        print("argument : --target-scan-data='%s', --company-id='%s', --user-id='%s', --application-yml-path='%s'" % (
-              opts.target_scan_data,
-              opts.company_id,
-              opts.user_id,
-              opts.application_yml_path))
+        print(
+            "argument : --target-scan-data='%s', --company-id='%s', --user-id='%s', --application-yml-path='%s', --round-robin-index=%s" % (
+                opts.target_scan_data,
+                opts.company_id,
+                opts.user_id,
+                opts.application_yml_path,
+                opts.round_robin_index))
 
         target_scan_data = opts.target_scan_data
         if target_scan_data is None and is_windows() is True:
@@ -185,7 +204,9 @@ def read_migration_options(test_date: str = Union[None, str]) -> MigrationComman
             target_company_ids=parser_list(opts.company_id),
             target_user_ids=parser_list(opts.user_id),
             target_scan_data=target_scan_data,
-            application_yml_path=opts.application_yml_path
+            application_yml_path=opts.application_yml_path,
+            rr_index=__parse_rr_index(opts.round_robin_index),
+            start_up_time=opts.start_up_time
         )
     except Exception as e:
         print("Error : %s" % e)

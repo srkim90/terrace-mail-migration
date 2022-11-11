@@ -135,9 +135,9 @@ class LoggingBase:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         except ImportError as e:
             return
-        new_log_message = "[%s] %s : %s" % (timestamp, level.name, log_message)
-        ptr_log_message = "[%s] %s%-5s%s : %s" % (
-            timestamp, Colors.debug_color(level).value, level.name, Colors.CEND.value, log_message)
+        new_log_message = "[%s] [pid=%d] %s : %s" % (timestamp, os.getpid(), level.name, log_message)
+        ptr_log_message = "[%s] [pid=%d] %s%-5s%s : %s" % (
+            timestamp,  os.getpid(), Colors.debug_color(level).value, level.name, Colors.CEND.value, log_message)
         if self.settings.stdout_log_level.value <= level.value:
             lock.acquire()
             print(ptr_log_message)

@@ -71,17 +71,22 @@ class CompanyMigrationResult:
                 self.n_migration_mail_fail += 1
 
 
+g_start_up_time: str = None
+
+
 def get_g_start_up_time():
-    return g_start_up_time
+    return get_migration_start_up_time()
+
+
+def set_g_start_up_time(start_up_time: str):
+    global g_start_up_time
+    g_start_up_time = start_up_time
 
 
 def json_serial(obj) -> str:
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-g_start_up_time = None
 
 
 def get_migration_start_up_time():

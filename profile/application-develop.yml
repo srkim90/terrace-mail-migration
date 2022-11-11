@@ -1,6 +1,8 @@
 system:
-  max-work-threads: 12
-  max-migration-threads: 8
+  max-work-threads: 3
+  max-work-process: 4
+  max-migration-threads: 2
+  max-migration-process: 4
 report:
   report-path: D:\data\report
   migration-result: D:\data\migration-result

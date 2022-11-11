@@ -16,24 +16,23 @@ from models.user_migration_result_models import UserMigrationResult
 @dataclass_json
 @dataclass
 class CompanyGlobalMigrationResult:
-    def __init__(self) -> None:
-        super().__init__()
-        self.start_at = datetime.now()
-        self.end_at = None
-        self.time_consuming = None
-        self.n_migration_user_target = 0
-        self.n_migration_user_success = 0
-        self.n_migration_user_fail = 0
-        self.n_migration_mail_target = 0
-        self.n_migration_mail_success = 0
-        self.n_migration_mail_fail = 0
-        self.user_result_type_classify = {}
-        self.mail_result_type_classify = {}
-        self.company_mail_size = 0
-        self.counting_date_range = None
+    # def __init__(self) -> None:
+    #     super().__init__()
+    #     self.start_at = datetime.now()
+    #     self.end_at = None
+    #     self.time_consuming = None
+    #     self.n_migration_user_target = 0
+    #     self.n_migration_user_success = 0
+    #     self.n_migration_user_fail = 0
+    #     self.n_migration_mail_target = 0
+    #     self.n_migration_mail_success = 0
+    #     self.n_migration_mail_fail = 0
+    #     self.user_result_type_classify = {}
+    #     self.mail_result_type_classify = {}
+    #     self.company_mail_size = 0
+    #     self.counting_date_range = None
 
 
-    counting_date_range: Days
     start_at: Union[datetime, None] = field(
         metadata=config(
             encoder=datetime.isoformat,
@@ -56,6 +55,7 @@ class CompanyGlobalMigrationResult:
     user_result_type_classify: Dict[str, int]
     mail_result_type_classify: Dict[str, int]
     company_mail_size: int
+    counting_date_range: Days
 
     def update(self, model: CompanyMigrationResult):
         self.end_at = datetime.now()
@@ -83,7 +83,13 @@ class CompanyGlobalMigrationResult:
         return
 
 
-def save_company_global_migration_report_as_json(result: CompanyGlobalMigrationResult, save_path: str) -> str:
+def load_migration_report(full_path) -> CompanyGlobalMigrationResult:
+    with open(full_path, "rb") as fd:
+        return CompanyGlobalMigrationResult.from_json(fd.read())
+
+
+def save_company_global_migration_report_as_json(result: CompanyGlobalMigrationResult, save_path: str,
+                                                 rr_index=-1) -> str:
     save_path = os.path.join(save_path, get_g_start_up_time())
     if os.path.exists(save_path) is False:
         try:
@@ -91,7 +97,10 @@ def save_company_global_migration_report_as_json(result: CompanyGlobalMigrationR
         except FileExistsError as e:
             pass
     result.end_at = datetime.now()
-    file_name = os.path.join(save_path, "migration_statistic_report.json")
+    if type(rr_index) == int and rr_index >= 0:
+        file_name = os.path.join(save_path, "migration_statistic_report_%d.json" % rr_index)
+    else:
+        file_name = os.path.join(save_path, "migration_statistic_report.json")
 
     json_data = CompanyGlobalMigrationResult.to_json(result, indent=4, ensure_ascii=False).encode("utf-8")
     # json_data = json.dumps(result, indent=4, ensure_ascii=False).encode("utf-8")

@@ -10,6 +10,7 @@ from models.day_models import Days
 @dataclass
 class ScanCommandOptions:
     scan_range: Days
+    rr_index: Union[int, None]
     scan_data_save_dir: Union[str, None]
     application_yml_path: Union[str, None]
     target_company_ids: Union[List[int], None]
