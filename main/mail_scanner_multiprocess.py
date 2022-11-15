@@ -74,6 +74,7 @@ class MailScanMultiProcessLoader:
         self.h_threads.append(h_thread)
 
     def __wait_thread(self, cmd):
+        self.logger.info("run subprocess : %s" % (cmd,))
         subprocess.run(cmd, shell=True)
 
     def __add_stat(self, report: ScanStatistic) -> None:
