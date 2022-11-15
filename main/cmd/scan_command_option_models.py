@@ -14,4 +14,5 @@ class ScanCommandOptions:
     scan_data_save_dir: Union[str, None]
     application_yml_path: Union[str, None]
     target_company_ids: Union[List[int], None]
+    exclude_company_ids: Union[List[int], None]
 

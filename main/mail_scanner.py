@@ -17,7 +17,7 @@ def main() -> None:
     install_signal()
     option: ScanCommandOptions = read_scan_options()
     psql = PostgresqlSqlScanner(option.scan_data_save_dir)
-    psql.report_user_and_company(option.scan_range, option.target_company_ids)
+    psql.report_user_and_company(option)
 
 
 if __name__ == '__main__':

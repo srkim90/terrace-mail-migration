@@ -79,6 +79,8 @@ def read_scan_options() -> ScanCommandOptions:
     parser.add_argument("-c", "--company-id",
                         help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
                              "마이그레이션 수행")
+    parser.add_argument("-e", "--exclude-company-id",
+                        help="(OPTIONAL) 마이그레이션 제외 회사 ID : 복수개 입력시 쉼표(,) 으로 구분")
     parser.add_argument("-s", "--start-day",
                         help="(OPTIONAL) 스캔 시작 일자")
     parser.add_argument("-e", "--end-day",
@@ -103,13 +105,13 @@ def read_scan_options() -> ScanCommandOptions:
         start_day = opts.start_day
         if end_day is not None:
             scan_range = Days(read_date(start_day), read_date(end_day))
-
         return ScanCommandOptions(
             application_yml_path=validate_application_yml_path(opts.application_yml_path),
             target_company_ids=parser_list(opts.company_id),
             scan_range=scan_range,
             scan_data_save_dir=opts.scan_data_save_directory,
             rr_index=__parse_rr_index(opts.round_robin_index),
+            exclude_company_ids=parser_list(opts.exclude_company_id),
         )
     except Exception as e:
         print("Error : %s" % e)

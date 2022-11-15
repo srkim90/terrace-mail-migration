@@ -5,6 +5,7 @@ import threading
 import time
 from typing import List, Dict, Union, Set, Tuple
 
+from main.cmd.scan_command_option_models import ScanCommandOptions
 from models.company_models import Company, save_company_as_json
 from models.company_scan_statistic_models import ScanStatistic, update_statistic, save_scan_stat_as_json
 from models.day_models import Days
@@ -385,7 +386,17 @@ class PostgresqlSqlScanner:
             h_threads.append(h_thread)
         return h_threads
 
-    def report_user_and_company(self, days: Days, company_ids: Union[List[int], None] = None):
+    def __is_exclude_company(self, company: Company, option: ScanCommandOptions) -> bool:
+        if option.exclude_company_ids is None or len(option.exclude_company_ids) is 0:
+            return True
+        if str(company.id) in option.exclude_company_ids:
+            return False
+        return True
+
+    def report_user_and_company(self, option: ScanCommandOptions):
+        days: Days = option.scan_range
+        company_ids: Union[List[int], None] = option.target_company_ids
+
         end_day = datetime.datetime.now()
         start_day = datetime.datetime.strptime("1975-01-01 00:00:00.000000", "%Y-%m-%d %H:%M:%S.%f")
         user_counts = self.get_users_count()
@@ -405,7 +416,8 @@ class PostgresqlSqlScanner:
                                                     user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
-            self.__enqueue(company, idx)
+            if self.__is_exclude_company(company, option) is True:
+                self.__enqueue(company, idx)
             if get_stop_flags() is True:
                 break
         self.__wait_for_processing()
