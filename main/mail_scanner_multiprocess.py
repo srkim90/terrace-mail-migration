@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import List
 
 from common_import import *
-from main.cmd.command_line_parser import read_scan_options
+from main.cmd.command_line_parser import read_scan_options, list_to_command
 from main.cmd.scan_command_option_models import ScanCommandOptions
 from models.company_migration_result_models import set_g_start_up_time
 from models.company_scan_statistic_models import ScanStatistic, get_scan_stat_report_file_name, \
@@ -47,9 +47,9 @@ class MailScanMultiProcessLoader:
         python_file = sys.argv[0].replace("mail_scanner_multiprocess.py", "mail_scanner.py")
         args: List[str] = [sys.executable, python_file]
         if self.option.target_company_ids is not None:
-            args.append("--company-id=%s" % self.option.target_company_ids)
+            args.append("--company-id=%s" % list_to_command(self.option.target_company_ids))
         if self.option.exclude_company_ids is not None:
-            args.append("--exclude-company-id=%s" % self.option.exclude_company_ids)
+            args.append("--exclude-company-id=%s" % list_to_command(self.option.exclude_company_ids))
         if self.option.scan_range is not None:
             if self.option.scan_range.start_day is not None:
                 args.append("--start-day=%s" % self.option.scan_range.start_day.strftime("%Y-%m-%d"))

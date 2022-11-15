@@ -8,7 +8,7 @@ from common_import import *
 import logging
 from typing import List
 
-from main.cmd.command_line_parser import read_migration_options
+from main.cmd.command_line_parser import read_migration_options, list_to_command
 from main.cmd.migration_command_option_models import MigrationCommandOptions
 from models.company_global_migration_result_models import CompanyGlobalMigrationResult, load_migration_report, \
     save_company_global_migration_report_as_json
@@ -42,9 +42,9 @@ class MailMigrationMultiProcessLoader:
         args: List[str] = [sys.executable, python_file]
         args.append("--target-scan-data=%s" % self.option.target_scan_data)
         if self.option.target_company_ids is not None:
-            args.append("--company-id=%s" % self.option.target_company_ids)
+            args.append("--company-id=%s" % list_to_command(self.option.target_company_ids))
         if self.option.target_user_ids is not None:
-            args.append("--user-id=%s" % self.option.target_user_ids)
+            args.append("--user-id=%s" % list_to_command(self.option.target_user_ids))
         if self.option.application_yml_path is not None:
             args.append("--application-yml-path=%s" % self.option.application_yml_path)
         args.append("--round-robin-index=%d" % rr_index)

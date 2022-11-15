@@ -24,6 +24,17 @@ def validate_application_yml_path(yml_file_name: Union[str, None]) -> None:
         exit()
 
 
+def list_to_command(value: List[int]) -> Union[str, None]:
+    if type(value) != list and type(value) != tuple:
+        return None
+    if len(value) == 0:
+        return None
+    cmd = ""
+    for __id in value:
+        cmd += "%d," % (__id,)
+    return cmd[0:-1]
+
+
 def parser_list(value: Union[str, None]) -> Union[List[int], None]:
     null_list = ["null", "none", "empty", "no", "n", "not"]
     if value is None:
