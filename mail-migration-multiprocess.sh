@@ -5,7 +5,7 @@ PYTHON_DIR=${BASE_DIR}/binary/Python-minimum
 PYTHON=${PYTHON_DIR}/python
 
 #YML_PATH=${BASE_DIR}/profile/application.yml
-YML_PATH=${BASE_DIR}/profile/application-revert.yml
+YML_PATH=${BASE_DIR}/profile/application-final.yml
 
 source $BASE_DIR/common.sh
 
@@ -13,14 +13,14 @@ print_help() {
     echo -e "\n"
     echo '+=================================================================================================+'
     echo ' [USAGE]'
-    echo '  ./mail-migration.sh [target-scan-data]'
-    echo '  ./mail-migration.sh [target-scan-data] [list-of-company-id]'
-    echo '  ./mail-migration.sh [target-scan-data] [list-of-company-id] [list-of-user-id]'
+    echo '  ./mail_transfer_multiprocess.sh [target-scan-data]'
+    echo '  ./mail_transfer_multiprocess.sh [target-scan-data] [list-of-company-id]'
+    echo '  ./mail_transfer_multiprocess.sh [target-scan-data] [list-of-company-id] [list-of-user-id]'
     echo '---------------------------------------------------------------------------------------------------'
     echo ' [EXAMPLE]'
-    echo '  ./mail-migration.sh report_20221014_142059'
-    echo '  ./mail-migration.sh report_20221014_142059 10,11,12,13,14'
-    echo '  ./mail-migration.sh report_20221014_142059 11 34444'
+    echo '  ./mail_transfer_multiprocess.sh report_20221014_142059'
+    echo '  ./mail_transfer_multiprocess.sh report_20221014_142059 10,11,12,13,14'
+    echo '  ./mail_transfer_multiprocess.sh report_20221014_142059 11 34444'
     echo '---------------------------------------------------------------------------------------------------'
     echo ' [CONFIGURATION]'
     echo "   -> configuration-path : $YML_PATH"
