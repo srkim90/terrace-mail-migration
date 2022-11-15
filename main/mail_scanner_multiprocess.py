@@ -59,6 +59,7 @@ class MailScanMultiProcessLoader:
             args.append("--application-yml-path=%s" % self.option.application_yml_path)
         if self.option.scan_data_save_dir is not None:
             args.append("--scan-data-save-directory=%s" % self.option.scan_data_save_dir)
+            self.start_up_time = self.option.scan_data_save_dir
         else:
             args.append("--scan-data-save-directory=%s" % self.start_up_time)
         args.append("--round-robin-index=%d" % rr_index)
