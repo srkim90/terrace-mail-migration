@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 def main() -> None:
     install_signal()
     option: ScanCommandOptions = read_scan_options()
-    psql = PostgresqlSqlScanner(option.scan_data_save_dir)
+    psql = PostgresqlSqlScanner(option)
     psql.report_user_and_company(option)
 
 

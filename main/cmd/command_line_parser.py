@@ -35,6 +35,9 @@ def parser_list(value: Union[str, None]) -> Union[List[int], None]:
     result: List[int] = []
     if type(value) is not str:
         return None
+    value = value.replace("[", "")
+    value = value.replace("]", "")
+    value = value.replace('"', '')
     values = value.strip().split(",")
     for item in values:
         result.append(int(item.strip()))
