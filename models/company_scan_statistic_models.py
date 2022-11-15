@@ -154,11 +154,13 @@ def update_statistic(stat: ScanStatistic, company: Company):
         stat.available_company_count += 1
 
 
-def get_scan_stat_report_file_name():
-    return "scan_statistic_report.json"
+def get_scan_stat_report_file_name(rr_index:int=-1):
+    if type(rr_index) != int or rr_index < 0:
+        return "scan_statistic_report.json"
+    return "scan_statistic_report_%d.json" % rr_index
 
 
-def save_scan_stat_as_json(stat: ScanStatistic, save_path: str) -> str:
+def save_scan_stat_as_json(stat: ScanStatistic, save_path: str, rr_index:int=-1) -> str:
     if os.path.exists(save_path) is False:
         os.makedirs(save_path)
     prop: dict = get_property()
@@ -168,7 +170,7 @@ def save_scan_stat_as_json(stat: ScanStatistic, save_path: str) -> str:
     if "date-range" in prop.keys():
         del (prop["date-range"])
     stat.settings = prop
-    file_name = os.path.join(save_path, get_scan_stat_report_file_name())
+    file_name = os.path.join(save_path, get_scan_stat_report_file_name(rr_index))
     json_data = ScanStatistic.to_json(stat, indent=4, ensure_ascii=False).encode("utf-8")
     with open(file_name, "wb") as fd:
         fd.write(json_data)

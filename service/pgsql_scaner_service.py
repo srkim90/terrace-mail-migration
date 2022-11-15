@@ -16,7 +16,7 @@ from service.pgsql_connector_service import PostgresqlConnector
 from service.property_provider_service import ApplicationSettings, ReportSettings, application_container
 from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
-from utils.utills import make_data_file_path, is_windows
+from utils.utills import make_data_file_path, is_windows, str_stack_trace
 
 
 class PostgresqlSqlScanner:
@@ -272,7 +272,11 @@ class PostgresqlSqlScanner:
             return company
         node_dict: Dict[int, List[MailMessage]] = {}
         for user_path in company.users:
-            user = self.load_user_json_data(user_path, self.logger)
+            try:
+                user = self.load_user_json_data(user_path, self.logger)
+            except Exception as e:
+                #self.logger.error("Error in load json_data : %s" % (str_stack_trace(),))
+                user = None
             if user is None:
                 continue
             # step.1 : 모든 사용자를 대상으로 inode 별 dict을 만든다.
@@ -291,6 +295,10 @@ class PostgresqlSqlScanner:
                 continue
             for mail in user.messages:
                 inode = mail.st_ino
+                try:
+                    k_checker = node_dict[inode]
+                except KeyError:
+                    continue
                 for other_mail in node_dict[inode]: # 각 개별메일에서 하드링크 카운트 및 목록을 업데이트 해준다.
                     if other_mail.full_path not in mail.hardlinks:
                         mail.hardlinks.append(other_mail.full_path)
@@ -400,7 +408,9 @@ class PostgresqlSqlScanner:
             return True
         if self.option.rr_index < 0 or self.option.rr_index >= self.setting_provider.system.max_work_process:
             return True
-        if idx % self.setting_provider.system.max_work_process == 0:
+        now_rr_index = idx % self.setting_provider.system.max_work_process
+        #print("now_rr_index : %s" % (now_rr_index,))
+        if now_rr_index == self.option.rr_index:
             return True
         return False
 
@@ -423,8 +433,9 @@ class PostgresqlSqlScanner:
                                                                 self.report_path)
         stat.add_logfile_name(self.logger.make_log_file_name())
 
-        self.logger.companies_scan_start_up_logging(end_day.strftime("%Y-%m-%d"), start_day.strftime("%Y-%m-%d"),
-                                                    user_counts, company_counts)
+        if self.option.rr_index is None:
+            self.logger.companies_scan_start_up_logging(end_day.strftime("%Y-%m-%d"), start_day.strftime("%Y-%m-%d"),
+                                                        user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
             if self.__is_my_rr_index(idx) is False:
@@ -440,8 +451,9 @@ class PostgresqlSqlScanner:
         self.logger.info("end of waiting threads")
         stat.scan_end_at = datetime.datetime.now()
         stat.add_logfile_name(self.logger.make_log_file_name())
-        self.logger.companies_scan_complete_logging(stat)
-        save_scan_stat_as_json(stat, self.report_path)
+        if option.rr_index is None:
+            self.logger.companies_scan_complete_logging(stat)
+        save_scan_stat_as_json(stat, self.report_path, self.option.rr_index)
 
     def find_company(self, days: Days, company_ids: Union[List[int], None] = None) -> List[Company]:
         where = ""

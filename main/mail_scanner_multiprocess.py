@@ -13,6 +13,7 @@ from main.cmd.scan_command_option_models import ScanCommandOptions
 from models.company_migration_result_models import set_g_start_up_time
 from models.company_scan_statistic_models import ScanStatistic, get_scan_stat_report_file_name, \
     load_scan_stat_from_json, save_scan_stat_as_json, merge_scan_stat
+from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, application_container
 from service.signal_service import install_signal
 
@@ -25,6 +26,8 @@ log = logging.getLogger(__name__)
 
 
 class MailScanMultiProcessLoader:
+    logger: LoggingService = application_container.logger
+
     def __init__(self) -> None:
         super().__init__()
         self.h_threads: List[threading.Thread] = []
@@ -41,17 +44,17 @@ class MailScanMultiProcessLoader:
 
     def __make_command(self, rr_index: int) -> str:
         cmd = ""
-        python_file = sys.argv[0].replace("mail_scanner_multiprocess.py", "mail_sender.py")
+        python_file = sys.argv[0].replace("mail_scanner_multiprocess.py", "mail_scanner.py")
         args: List[str] = [sys.executable, python_file]
-        args.append("--target-scan-data=%s" % self.option.target_scan_data)
         if self.option.target_company_ids is not None:
             args.append("--company-id=%s" % self.option.target_company_ids)
         if self.option.exclude_company_ids is not None:
             args.append("--exclude-company-id=%s" % self.option.exclude_company_ids)
-        if self.option.scan_range.start_day is not None:
-            args.append("--start-day=%s" % self.option.scan_range.start_day.strftime("%Y-%m-%d"))
-        if self.option.scan_range.end_day is not None:
-            args.append("--end-day=%s" % self.option.scan_range.end_day.strftime("%Y-%m-%d"))
+        if self.option.scan_range is not None:
+            if self.option.scan_range.start_day is not None:
+                args.append("--start-day=%s" % self.option.scan_range.start_day.strftime("%Y-%m-%d"))
+            if self.option.scan_range.end_day is not None:
+                args.append("--end-day=%s" % self.option.scan_range.end_day.strftime("%Y-%m-%d"))
         if self.option.application_yml_path is not None:
             args.append("--application-yml-path=%s" % self.option.application_yml_path)
         if self.option.scan_data_save_dir is not None:
@@ -59,7 +62,6 @@ class MailScanMultiProcessLoader:
         else:
             args.append("--scan-data-save-directory=%s" % self.start_up_time)
         args.append("--round-robin-index=%d" % rr_index)
-        args.append("--start-up-time=%s" % self.start_up_time)
         for item in args:
             cmd += "%s " % (item,)
         return cmd
@@ -95,6 +97,7 @@ class MailScanMultiProcessLoader:
             report: ScanStatistic = load_scan_stat_from_json(full_path)
             self.__add_stat(report)
         save_scan_stat_as_json(self.report, self.setting_provider.report.migration_result)
+        self.logger.companies_scan_complete_logging(self.report)
 
 
     def run(self):
@@ -106,10 +109,9 @@ class MailScanMultiProcessLoader:
             h_thread.join()
 
 def main() -> None:
-    install_signal()
-    option: ScanCommandOptions = read_scan_options()
-    psql = PostgresqlSqlScanner(option)
-    psql.report_user_and_company(option)
+    loader = MailScanMultiProcessLoader()
+    loader.run()
+    loader.assemble_stat()
 
 
 if __name__ == '__main__':
