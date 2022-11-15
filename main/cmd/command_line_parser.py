@@ -79,7 +79,7 @@ def read_scan_options() -> ScanCommandOptions:
     parser.add_argument("-c", "--company-id",
                         help="(OPTIONAL) 마이그레이션 대상 회사 ID : 복수개 입력시 쉼표(,) 으로 구분; 입력하지 않을 경우 모든 회사 대상으로 "
                              "마이그레이션 수행")
-    parser.add_argument("-e", "--exclude-company-id",
+    parser.add_argument("-x", "--exclude-company-id",
                         help="(OPTIONAL) 마이그레이션 제외 회사 ID : 복수개 입력시 쉼표(,) 으로 구분")
     parser.add_argument("-s", "--start-day",
                         help="(OPTIONAL) 스캔 시작 일자")
