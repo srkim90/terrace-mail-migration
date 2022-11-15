@@ -101,6 +101,37 @@ class ScanStatistic:
         )
 
 
+def merge_scan_stat(stat_a: ScanStatistic, stat_b: ScanStatistic):
+    new_stat = ScanStatistic(
+        scan_start_at=stat_a.scan_start_at,
+        scan_end_at=stat_a.scan_end_at,
+        scan_start_date=stat_a.scan_start_date,
+        scan_end_date=stat_a.scan_end_date,
+        company_mail_size_in_db=stat_a.company_mail_size_in_db + stat_b.company_mail_size_in_db,
+        company_mail_size=stat_a.company_mail_size + stat_b.company_mail_size,
+        company_mail_count=stat_a.company_mail_count + stat_b.company_mail_count,
+        company_hardlink_mail_count=stat_a.company_hardlink_mail_count + stat_b.company_hardlink_mail_count,
+        company_non_link_mail_count=stat_a.company_non_link_mail_count + stat_b.company_non_link_mail_count,
+        company_hardlink_mail_unique_count=stat_a.company_hardlink_mail_unique_count + stat_b.company_hardlink_mail_unique_count,
+        company_hardlink_mail_size=stat_a.company_hardlink_mail_size + stat_b.company_hardlink_mail_size,
+        company_non_link_mail_size=stat_a.company_non_link_mail_size + stat_b.company_non_link_mail_size,
+        company_hardlink_mail_unique_size=stat_a.company_hardlink_mail_unique_size + stat_b.company_hardlink_mail_unique_size,
+        not_exist_user_in_pgsql=stat_a.not_exist_user_in_pgsql + stat_b.not_exist_user_in_pgsql,
+        not_exist_user_in_sqlite=stat_a.not_exist_user_in_sqlite + stat_b.not_exist_user_in_sqlite,
+        available_user_count=stat_a.available_user_count + stat_b.available_user_count,
+        empty_mail_box_user_count=stat_a.empty_mail_box_user_count + stat_b.empty_mail_box_user_count,
+        source_path_not_match_mails=stat_a.source_path_not_match_mails + stat_b.source_path_not_match_mails,
+        company_count=stat_a.company_count + stat_b.company_count,
+        available_company_count=stat_a.available_company_count + stat_b.available_company_count,
+        user_all_mail_count=stat_a.user_all_mail_count + stat_b.user_all_mail_count,
+        user_all_mail_size=stat_a.user_all_mail_size + stat_b.user_all_mail_size,
+        report_save_path=stat_a.report_save_path,
+        log_file_names=stat_a.log_file_names,
+        settings=stat_a.settings
+    )
+    return new_stat
+
+
 def update_statistic(stat: ScanStatistic, company: Company):
     stat.company_mail_size_in_db += company.company_mail_size_in_db
     stat.company_mail_size += company.company_mail_size

@@ -25,7 +25,7 @@ class PostgresqlSqlScanner:
     mail_checker = application_container.mail_file_checker
     is_windows: bool
 
-    def __init__(self, report_path: Union[str, None] = None) -> None:
+    def __init__(self, option: ScanCommandOptions) -> None:
         super().__init__()
         self.report: ReportSettings = self.setting_provider.report
         self.logger.info("PostgresqlScanner start up")
@@ -33,7 +33,8 @@ class PostgresqlSqlScanner:
         self.is_windows = is_windows()
         self.work_queue: Union[List[Tuple[Company, int]], None] = None
         self.lock = threading.Semaphore(1)
-        self.report_path = self.__select_report_path(report_path)
+        self.report_path = self.__select_report_path(option.scan_data_save_dir)
+        self.option: ScanCommandOptions = option
 
     def __save_user_json(self, user: User, json_full_path: str):
         json_data = User.to_json(user, indent=4, ensure_ascii=False).encode("utf-8")
@@ -393,6 +394,16 @@ class PostgresqlSqlScanner:
             return False
         return True
 
+    def __is_my_rr_index(self, idx: int) -> bool:
+        # 멀티 프로세스로 실행 시켰을 경우, 자신의 인덱스 인지 확인한다.
+        if type(self.option.rr_index) is not int or type(self.setting_provider.system.max_work_process) is not int:
+            return True
+        if self.option.rr_index < 0 or self.option.rr_index >= self.setting_provider.system.max_work_process:
+            return True
+        if idx % self.setting_provider.system.max_work_process == 0:
+            return True
+        return False
+
     def report_user_and_company(self, option: ScanCommandOptions):
         days: Days = option.scan_range
         company_ids: Union[List[int], None] = option.target_company_ids
@@ -416,6 +427,8 @@ class PostgresqlSqlScanner:
                                                     user_counts, company_counts)
         h_threads = self.__make_worker_ths(days, company_counts, stat)
         for idx, company in enumerate(self.find_company(days, company_ids)):
+            if self.__is_my_rr_index(idx) is False:
+                continue
             if self.__is_exclude_company(company, option) is True:
                 self.__enqueue(company, idx)
             if get_stop_flags() is True:
