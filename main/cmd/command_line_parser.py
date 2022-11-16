@@ -18,7 +18,7 @@ def validate_application_yml_path(yml_file_name: Union[str, None]) -> None:
     if yml_file_name is None:
         return None
     yml_file_name = yml_file_name.strip()
-    if yml_file_name.lower() == null_list:
+    if yml_file_name.lower() in null_list:
         return None
     if os.path.exists(yml_file_name) is False:
         print("입력한 application.yml 파일이 존재하지 않습니다")

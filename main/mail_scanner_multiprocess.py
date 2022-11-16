@@ -35,7 +35,7 @@ class MailScanMultiProcessLoader:
         self.setting_provider: ApplicationSettings = application_container.setting_provider
         self.start_up_time = datetime.now().strftime("%Y%m%d_%H%M%S") # 스켄 결과 저장 경로로 쓴다.
         self.report: ScanStatistic = None
-
+        self.logger.info("%s" % self.option)
 
     def __get_proc_count(self) -> int:
         if self.setting_provider.system.max_work_process is None:
