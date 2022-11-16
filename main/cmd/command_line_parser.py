@@ -23,6 +23,7 @@ def validate_application_yml_path(yml_file_name: Union[str, None]) -> None:
     if os.path.exists(yml_file_name) is False:
         print("입력한 application.yml 파일이 존재하지 않습니다")
         exit()
+    return None
 
 
 def list_to_command(value: List[int]) -> Union[str, None]:
@@ -120,8 +121,9 @@ def read_scan_options() -> ScanCommandOptions:
         start_day = opts.start_day
         if end_day is not None:
             scan_range = Days(read_date(start_day), read_date(end_day))
+        validate_application_yml_path(opts.application_yml_path)
         return ScanCommandOptions(
-            application_yml_path=validate_application_yml_path(opts.application_yml_path),
+            application_yml_path=opts.application_yml_path,
             target_company_ids=parser_list(opts.company_id),
             scan_range=scan_range,
             scan_data_save_dir=opts.scan_data_save_directory,
