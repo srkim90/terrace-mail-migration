@@ -307,6 +307,7 @@ class PostgresqlSqlScanner:
         # step.2 : company객체에 통계 정보를 업데이트 해준다.
         for inode in node_dict.keys():
             for idx, mail in enumerate(node_dict[inode]):
+                mail.hardlink_count = len(node_dict[inode])
                 if mail.hardlink_count >= 2:
                     company.company_hardlink_mail_count += 1
                     company.company_hardlink_mail_size += mail.st_size
