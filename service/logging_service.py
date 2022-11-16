@@ -120,7 +120,10 @@ class LoggingBase:
         max_logfile_size = self.settings.max_logfile_size
         log_path = self.settings.log_path
         if os.path.exists(log_path) is False:
-            os.makedirs(log_path)
+            try:
+                os.makedirs(log_path)
+            except FileExistsError:
+                pass
             return None
         file_name = "%s.log" % (datetime.datetime.now().strftime("%Y%m%d"),)
         file_name = os.path.join(log_path,  file_name)

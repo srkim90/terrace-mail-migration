@@ -162,7 +162,10 @@ def get_scan_stat_report_file_name(rr_index:int=-1):
 
 def save_scan_stat_as_json(stat: ScanStatistic, save_path: str, rr_index:int=-1) -> str:
     if os.path.exists(save_path) is False:
-        os.makedirs(save_path)
+        try:
+            os.makedirs(save_path)
+        except FileExistsError:
+            pass
     prop: dict = get_property()
     prop["mail"]["path"]["origin-mdata-path"] = parser_dir_list(prop["mail"]["path"]["origin-mdata-path"])
     prop["mail"]["path"]["new-mdata-path"] = parser_dir_list(prop["mail"]["path"]["new-mdata-path"])

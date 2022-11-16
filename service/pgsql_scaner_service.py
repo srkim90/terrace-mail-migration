@@ -72,7 +72,10 @@ class PostgresqlSqlScanner:
         if "/" not in report_path and "\\" not in report_path:
             report_path = os.path.join(self.report.report_path, report_path)
         if os.path.exists(report_path) is False:
-            os.makedirs(report_path)
+            try:
+                os.makedirs(report_path)
+            except FileExistsError:
+                pass
         return report_path
 
     def __pg_disconnect(self) -> None:

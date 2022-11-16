@@ -226,7 +226,10 @@ class MailMigrationService:
         new_dir = os.path.join(new_mdata_path, new_dir)
         self.logger.debug("new_dir: %s" % (new_dir,))
         if os.path.exists(new_dir) is False:
-            os.makedirs(new_dir)
+            try:
+                os.makedirs(new_dir)
+            except FileExistsError:
+                pass
         full_new_file = os.path.join(new_dir, file_name)
         if os.path.exists(full_new_file) is True:
             self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재합니다. : full_new_file=%s, %s" %
