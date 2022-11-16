@@ -85,13 +85,16 @@ class MailScanMultiProcessLoader:
         return
 
     def assemble_stat(self):
+        self.logger.info("---=== start merge subprocess stat ===---")
         report_file_name = get_scan_stat_report_file_name() # scan_statistic_report.json
         prefix = report_file_name.replace(".json", "_")
         result_path = os.path.join(self.setting_provider.report.report_path, self.start_up_time)
+        self.logger.info("result_path : %s" % result_path)
         for item in os.listdir(result_path):
             full_path = os.path.join(result_path, item)
             if os.path.isfile(full_path) is False:
                 continue
+            self.logger.info("file : %s" % full_path)
             if prefix not in item:
                 continue
             if ".json" not in item:
