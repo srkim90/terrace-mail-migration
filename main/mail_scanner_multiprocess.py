@@ -101,7 +101,7 @@ class MailScanMultiProcessLoader:
                 continue
             report: ScanStatistic = load_scan_stat_from_json(full_path)
             self.__add_stat(report)
-        save_scan_stat_as_json(self.report, self.setting_provider.report.migration_result)
+        save_scan_stat_as_json(self.report, self.setting_provider.report.report_path)
         self.logger.companies_scan_complete_logging(self.report)
 
 
