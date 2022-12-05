@@ -9,8 +9,6 @@ import platform
 from typing import List, Union, Tuple
 
 import yaml as yaml
-
-import chardet
 from models.company_models import Company
 from models.user_models import User
 
