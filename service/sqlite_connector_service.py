@@ -265,16 +265,17 @@ class SqliteConnector:
                 is_charset_ok, full_path, coding = try_bytes_decoding(bytes_full_path)
                 folder_no:int = row[0]
                 uid_no:int = row[1]
+                b64_bytes_full_path: str = base64.b64encode(bytes_full_path).decode("utf-8")
                 if is_charset_ok is False:
-                    self.logger.info("Fail to decode full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
-                                 % (bytes_full_path, self.db_path, self.company_name, self.company_id, self.user_id, folder_no, uid_no))
+                    self.logger.info("Fail to decode full_path=%s, bytes_full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
+                                 % (b64_bytes_full_path, bytes_full_path, self.db_path, self.company_name, self.company_id, self.user_id, folder_no, uid_no))
                     continue
                 messages.append(MailMessage(
                     folder_no=folder_no,
                     uid_no=uid_no,
                     full_path=full_path,
                     email_file_coding=coding,
-                    bytes_full_path=base64.b64encode(bytes_full_path).decode("utf-8"),
+                    bytes_full_path=b64_bytes_full_path,
                     msg_size=row[3],
                     msg_receive=row[4],
                     st_ctime=0.0,
