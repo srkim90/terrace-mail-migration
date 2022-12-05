@@ -6,10 +6,11 @@ import dataclasses, json
 import datetime
 import os
 import platform
-from typing import List, Union
+from typing import List, Union, Tuple
 
 import yaml as yaml
 
+import chardet
 from models.company_models import Company
 from models.user_models import User
 
@@ -71,6 +72,28 @@ def set_property_path(property_path: str) -> None:
     if type(property_path) is str:
         g_property_path = property_path
 
+
+def try_bytes_decoding(input_str: bytes) -> Tuple[bool, str, str]:
+    check_coding = ["utf-8", "euc-kr", 'cp949', 'euc-jp',]
+    for coding in check_coding:
+        try:
+            decoded_str = input_str.decode(coding)
+            return True, decoded_str, coding
+        except Exception:
+            continue
+    return False, "invalid chardet", None
+    # val = chardet.detect(input_str)
+    # if val is not None:
+    #     detected_coding = val['encoding']
+    #     detected_confidence = val['confidence']
+    #     if type(detected_confidence) is float and type(detected_coding) is str:
+    #         if detected_confidence > 0.99:
+    #             try:
+    #                 decoded_str = input_str.decode(detected_coding)
+    #                 return True, decoded_str, detected_coding
+    #             except Exception:
+    #                 pass
+    # return False, "invalid chardet", None
 
 g_checked = False
 

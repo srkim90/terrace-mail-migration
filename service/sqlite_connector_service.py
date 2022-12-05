@@ -6,7 +6,7 @@ from models.day_models import Days
 from models.mail_models import MailMessage
 from service.logging_service import LoggingService
 from service.property_provider_service import ApplicationSettings, application_container
-from utils.utills import str_stack_trace
+from utils.utills import str_stack_trace, try_bytes_decoding
 
 
 class SqliteConnector:
@@ -51,12 +51,19 @@ class SqliteConnector:
                 conn = sqlite3.connect('file:%s' % db_path, uri=True)
         except sqlite3.NotSupportedError as e:
             conn = sqlite3.connect('%s' % db_path)
+        #conn.text_factory = str
+        conn.text_factory = bytes
         return conn
 
     def __query_execute(self, cur, query: str) -> None:
         self.logger.debug("sqlite query execute : company_id=%d, user_id=%d, query='%s'" %
                           (self.company_id, self.user_id, query,))
         cur.execute(query)
+
+    def __query_execute_bytes(self, cur, query: str, data: str, coding: str) -> None:
+        self.logger.debug("sqlite query execute : company_id=%d, user_id=%d, query='%s', coding=%s" %
+                          (self.company_id, self.user_id, query, coding))
+        cur.execute(query, (memoryview(data.encode(coding)),))
 
     def __check_eml_data(self, full_path: str) -> (float, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(full_path)
@@ -109,17 +116,17 @@ class SqliteConnector:
             sub_query += " and msg_receive > %s" % s_timestamp
         return sub_query
 
-    def check_mail_exist(self, mail_name: str) -> bool:
-        exist = False
-        cur = self.conn.cursor()
-        self.__query_execute(cur, "select count(*) from mail_message where full_path like('%%" + mail_name + "')")
-        for row in cur:
-            count = row[0]
-            if count > 0:
-                exist = True
-            break
-        cur.close()
-        return exist
+    # def check_mail_exist(self, mail_name: str) -> bool:
+    #     exist = False
+    #     cur = self.conn.cursor()
+    #     self.__query_execute(cur, "select count(*) from mail_message where full_path like('%%" + mail_name + "')")
+    #     for row in cur:
+    #         count = row[0]
+    #         if count > 0:
+    #             exist = True
+    #         break
+    #     cur.close()
+    #     return exist
 
     def get_mail_all_by_hash(self, only_name: bool = False) -> Dict[str, int]:
         mails = self.get_mail_all(only_name)
@@ -134,7 +141,9 @@ class SqliteConnector:
         cur = self.conn.cursor()
         self.__query_execute(cur, "select full_path from mail_message")
         for row in cur:
-            full_path: str = row[0]
+            is_charset_ok, full_path, coding = try_bytes_decoding(row[0])
+            if is_charset_ok is False:
+                continue
             if only_name is True:
                 full_path = full_path.replace("\\", "/").split("/")[-1]
             mail_list.append(full_path)
@@ -165,7 +174,9 @@ class SqliteConnector:
         self.__query_execute(cur,
             "select full_path from mail_message where folder_no = %d and uid_no = %d" % (folder_no, uid_no))
         for idx, row in enumerate(cur):
-            full_path = row[0]
+            is_charset_ok, full_path, coding = try_bytes_decoding(row[0])
+            if is_charset_ok is False:
+                continue
             if idx != 0:
                 self.logger.error("__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
                                                                                                  uid_no=uid_no))
@@ -211,27 +222,32 @@ class SqliteConnector:
             return path.replace(test_path, "").replace("\\", "/")
         return path
 
-    def update_mbackup(self, folder_no: int, uid_no: int, new_full_path: str):
+    def update_mbackup(self, folder_no: int, uid_no: int, new_full_path: str, coding: str):
         if self.mbackup_conn is None:
             return
-        # _mbackup_conn = self.__db_conn(self.db_path.replace("_mcache.db", "_mbackup.db"), readonly=False)
         cur = self.mbackup_conn.cursor()
-        sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
-            self.__check_windows_dir(new_full_path), folder_no, uid_no)
-        self.__query_execute(cur, sql)
+        #new_full_path = self.__check_windows_dir(new_full_path)
+        #sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
+        #   new_full_path, folder_no, uid_no)
+        new_full_path = self.__check_windows_dir(new_full_path)
+        sql = "update mail_message set full_path = ? where folder_no = %d and uid_no = %d" % (
+             folder_no, uid_no)
+        self.__query_execute_bytes(cur, sql, new_full_path, coding)
         cur.close()
-        # _mbackup_conn.commit()
-        # _mbackup_conn.close()
         return
 
 
-    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str, old_full_path: str) -> bool:
-        if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
-            return False
+    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str, old_full_path: str, coding: str, check_validate: bool = True) -> bool:
+        if check_validate is True:
+            if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
+                return False
         cur = self.conn.cursor()
-        sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
-            self.__check_windows_dir(new_full_path), folder_no, uid_no)
-        self.__query_execute(cur, sql)
+        # sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
+        #     self.__check_windows_dir(new_full_path), folder_no, uid_no)
+        new_full_path = self.__check_windows_dir(new_full_path)
+        sql = "update mail_message set full_path = ? where folder_no = %d and uid_no = %d" % (
+             folder_no, uid_no)
+        self.__query_execute_bytes(cur, sql, new_full_path, coding)
         cur.close()
         return True
 
@@ -240,18 +256,34 @@ class SqliteConnector:
         messages: List[MailMessage] = []
         self.__query_execute(cur,
             "select folder_no, uid_no, full_path, msg_size, msg_receive from mail_message" + self.__make_where(days))
-        for row in cur:
-            messages.append(MailMessage(
-                folder_no=row[0],
-                uid_no=row[1],
-                full_path=row[2],
-                msg_size=row[3],
-                msg_receive=row[4],
-                st_ctime=0.0,
-                st_ino=0,
-                st_size=0,
-                hardlink_count=0,
-                hardlinks=[]
-            ))
+
+        try:
+            messages = []
+            for row in cur:
+                bytes_full_path:bytes = row[2]
+                is_charset_ok, full_path, coding = try_bytes_decoding(bytes_full_path)
+                folder_no:int = row[0]
+                uid_no:int = row[1]
+                if is_charset_ok is False:
+                    self.logger.info("Fail to decode full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
+                                 % (bytes_full_path, self.db_path, self.company_name, self.company_id, self.user_id, folder_no, uid_no))
+                    continue
+                messages.append(MailMessage(
+                    folder_no=folder_no,
+                    uid_no=uid_no,
+                    full_path=full_path,
+                    email_file_coding=coding,
+                    bytes_full_path=bytes_full_path,
+                    msg_size=row[3],
+                    msg_receive=row[4],
+                    st_ctime=0.0,
+                    st_ino=0,
+                    st_size=0,
+                    hardlink_count=0,
+                    hardlinks=[]
+                ))
+        except sqlite3.OperationalError as e:
+            self.logger.error("[get_target_mail_list] Error %s : \n%s" % (e, str_stack_trace()))
+            pass
         cur.close()
         return messages

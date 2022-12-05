@@ -378,14 +378,18 @@ class PostgresqlSqlScanner:
             company: Company
             start: float = time.time()
             json_file_name = None
-            company = self.__add_mail_count_info(company, days)
-            company = self.__add_mail_inode_info(company)
-            if len(company.users) > 0:
-                json_file_name = save_company_as_json(company, self.report_path)
-            self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
-            self.lock.acquire()
-            update_statistic(stat, company)
-            self.lock.release()
+            try:
+                company = self.__add_mail_count_info(company, days)
+                company = self.__add_mail_inode_info(company)
+                if len(company.users) > 0:
+                    json_file_name = save_company_as_json(company, self.report_path)
+                self.logger.a_company_complete_logging(idx + 1, company_counts, company, json_file_name, start)
+                self.lock.acquire()
+                update_statistic(stat, company)
+                self.lock.release()
+            except Exception as e:
+                self.logger.error("[__company_worker_th] Error in Scan company : %s\n%s" % (e, str_stack_trace()))
+                continue
         return
 
     def __make_worker_ths(self, days: Days, company_counts: int, stat: ScanStatistic):

@@ -340,7 +340,7 @@ class MailMigrationService:
             self.logger.minor("Fail to create new mail file: %s" % self.__make_log_identify(user))
             return False, None, None, stat
         self.migration_logging.inc_sqlite_update_query()
-        result = sqlite.update_mail_path(mail.folder_no, mail.uid_no, new_full_path, old_full_path)
+        result = sqlite.update_mail_path(mail.folder_no, mail.uid_no, new_full_path, old_full_path, mail.email_file_coding)
         if result is False:
             os.remove(new_full_path)
             self.migration_logging.inc_migration_fail_sqlite_db_update_fail()
@@ -348,7 +348,7 @@ class MailMigrationService:
             return False, None, None, MailMigrationResultType.SQLITE_M_BACKUP_DB_UPDATE_FAIL
         else:
             # os.remove(org_full_path) # commit 이후 삭제하도록 로직을 변경 하였다.
-            sqlite.update_mbackup(mail.folder_no, mail.uid_no, new_full_path)
+            sqlite.update_mbackup(mail.folder_no, mail.uid_no, new_full_path, mail.email_file_coding)
             self.migration_logging.inc_mail_delete()
             return True, org_full_path, new_full_path, MailMigrationResultType.SUCCESS
 
