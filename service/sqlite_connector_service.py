@@ -261,11 +261,13 @@ class SqliteConnector:
         try:
             messages = []
             for row in cur:
+                b64_bytes_full_path: str = "utf-8"
                 bytes_full_path:bytes = row[2]
                 is_charset_ok, full_path, coding = try_bytes_decoding(bytes_full_path)
                 folder_no:int = row[0]
                 uid_no:int = row[1]
-                b64_bytes_full_path: str = base64.b64encode(bytes_full_path).decode("utf-8")
+                if is_charset_ok is False or coding != "utf-8": # 파일 이름 인코딩이 UTF-8 이 아닐 경우, 디버깅을 위해 b64로 값을 찍어둔다.
+                    b64_bytes_full_path = base64.b64encode(bytes_full_path).decode("utf-8")
                 if is_charset_ok is False:
                     self.logger.info("Fail to decode full_path=%s, bytes_full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
                                  % (b64_bytes_full_path, bytes_full_path, self.db_path, self.company_name, self.company_id, self.user_id, folder_no, uid_no))
