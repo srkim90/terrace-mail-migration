@@ -1,3 +1,4 @@
+import base64
 import os
 import sqlite3
 from typing import Tuple, List, Union, Dict
@@ -273,7 +274,7 @@ class SqliteConnector:
                     uid_no=uid_no,
                     full_path=full_path,
                     email_file_coding=coding,
-                    bytes_full_path=bytes_full_path,
+                    bytes_full_path=base64.b64encode(bytes_full_path).decode("utf-8"),
                     msg_size=row[3],
                     msg_receive=row[4],
                     st_ctime=0.0,

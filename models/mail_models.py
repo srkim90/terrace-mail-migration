@@ -10,7 +10,7 @@ class MailMessage:
     folder_no: int
     uid_no: int
     full_path: str
-    bytes_full_path: bytes
+    bytes_full_path: str
     email_file_coding: str
     msg_size: int
     msg_receive: int
