@@ -240,7 +240,7 @@ class PostgresqlSqlScanner:
                 webfolder_user_all_mail_count, webfolder_user_all_mail_size = sqlite_webfolder.get_target_mail_count(None)
                 user.user_all_mail_count += webfolder_user_all_mail_count
                 user.user_all_mail_size += webfolder_user_all_mail_size
-                if webfolder_user_mail_count < 0:
+                if webfolder_user_mail_count > 0:
                     user.user_mail_count += webfolder_user_mail_count
                     user.user_mail_size += webfolder_user_mail_size
                     self.logger.minor("WEBFOLDER detected : %s company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
