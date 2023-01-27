@@ -492,7 +492,7 @@ class MailMigrationService:
                 selected_conn = check_conn
                 if rm_model.is_webfolder is True:
                     selected_conn = check_conn_webfolder
-                if self.__final_check_and_delete_old_mail(rm_model, check_conn) is False:
+                if self.__final_check_and_delete_old_mail(rm_model, selected_conn) is False:
                     self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
                     print_user_info(company, user), rm_model.del_full_path))
             check_conn.disconnect()
