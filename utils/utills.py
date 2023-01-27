@@ -141,10 +141,10 @@ def load_property():
     return setting_provider
 
 
-def make_data_file_path(file_path: str, sub_dirs: List[str] = None) -> str:
+def make_data_file_path(file_path: str, sub_dirs: List[str] = None, dir_modify=True) -> str:
     load_property()
     local_test_data_path = ""
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" and dir_modify is True:
         file_path = file_path.replace("/", "\\")[1:]
         local_test_data_path = setting_provider.report.local_test_data_path
     file_path = os.path.join(local_test_data_path, file_path)

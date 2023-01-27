@@ -24,7 +24,8 @@ from service.pgsql_scaner_service import PostgresqlSqlScanner
 from service.property_provider_service import ApplicationSettings, application_container
 from service.signal_service import get_stop_flags
 from service.sqlite_connector_service import SqliteConnector
-from utils.utills import handle_userdata_if_windows, is_windows, str_stack_trace, print_user_info, calc_file_hash
+from utils.utills import handle_userdata_if_windows, is_windows, str_stack_trace, print_user_info, calc_file_hash, \
+    make_data_file_path
 
 
 class ThreadInfo:
@@ -412,10 +413,14 @@ class MailMigrationService:
                 break
         self.lock.release()
 
+    def __make_webfolder_mindex_path(self, user: User) -> str:
+        return make_data_file_path(user.message_store, ["etc", "WEBFOLDER", "_mcache.db"], dir_modify=False)
+
     def __handle_a_user(self, user: User) -> UserMigrationResult:
         user_stat = self.__init_user_statistic(user)
         company = self.company
         old_mails_to_delete: List[MailRemoveModels] = []
+        conn_webfolder: Union[SqliteConnector, None] = None
         user = handle_userdata_if_windows(user, self.setting_provider.report.local_test_data_path)
         self.logger.minor("start user mail transfer: %s" % self.__make_log_identify(user))
         try:
@@ -423,6 +428,12 @@ class MailMigrationService:
             conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=False)
             conn.make_mbackup_conn()
             self.migration_logging.inc_sqlite_db_open()
+
+            ## 2023.01.27 자료실 메일 이관 대상 포함
+            sqlite_webfolder: Union[SqliteConnector, None] = None
+            webfolder_path = self.__make_webfolder_mindex_path(user)
+            if os.path.exists(webfolder_path) is True:
+                conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False, is_webfolder=True)
         except Exception as e:
             self.logger.error("start user mail transfer error: %s, error-message=%s"
                               % (self.__make_log_identify(user), str_stack_trace()))
@@ -436,7 +447,14 @@ class MailMigrationService:
             new_mail_path = None
 
             try:
-                is_success, delete_mail_path, new_mail_path, result_type = self.__move_a_file(user, mail, conn)
+                select_conn = conn
+                if mail.is_webfolder is True:
+                    if conn_webfolder is None:
+                        self.logger.error("user WEBFOLDER not exist: %s, %s"
+                                          % (self.__make_webfolder_mindex_path(user), self.__make_log_identify(user)))
+                        continue
+                    select_conn = conn_webfolder
+                is_success, delete_mail_path, new_mail_path, result_type = self.__move_a_file(user, mail, select_conn)
             except Exception as e:
                 self.logger.error(
                     "Error. fail in __move_a_file : uid=%d, company_id=%d, mail_uid_no=%d, folder_no=%d, e=%s, trace=\n%s"
@@ -460,6 +478,9 @@ class MailMigrationService:
         user_stat.commit_start_at = datetime.datetime.now()
         commit_result = conn.commit()
         conn.disconnect()
+        if conn_webfolder is not None:
+            conn_webfolder.commit()
+            conn_webfolder.disconnect()
         if commit_result is True:
             user_stat.commit_end_at = datetime.datetime.now()
             check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)

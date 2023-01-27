@@ -15,6 +15,7 @@ class SqliteConnector:
     readonly: bool
     company_id: int
     user_id: int
+    is_webfolder: bool
     company_name: str
     setting_provider: ApplicationSettings = application_container.setting_provider
     mail_checker = application_container.mail_file_checker
@@ -22,13 +23,14 @@ class SqliteConnector:
     conn = None
     mbackup_conn = None
 
-    def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, readonly: bool = True) -> None:
+    def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, is_webfolder: bool = False, readonly: bool = True) -> None:
         super().__init__()
         self.readonly = readonly
         self.company_id = company_id
         self.user_id = user_id
         self.company_name = company_name
         self.db_path = db_path
+        self.is_webfolder = is_webfolder
         self.conn = self.__db_conn(db_path, readonly)
         self.mbackup_conn = None
 
@@ -284,6 +286,7 @@ class SqliteConnector:
                     st_ino=0,
                     st_size=0,
                     hardlink_count=0,
+                    is_webfolder=self.is_webfolder,
                     hardlinks=[]
                 ))
         except sqlite3.OperationalError as e:

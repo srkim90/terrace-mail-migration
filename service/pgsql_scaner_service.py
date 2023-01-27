@@ -190,6 +190,9 @@ class PostgresqlSqlScanner:
     def __make_mindex_path(self, user: User) -> str:
         return make_data_file_path(user.message_store, ["_mcache.db"])
 
+    def __make_webfolder_mindex_path(self, user: User) -> str:
+        return make_data_file_path(user.message_store, ["etc", "WEBFOLDER", "_mcache.db"])
+
     def __check_eml_data(self, message: MailMessage) -> (float, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(message.full_path)
         return stat.st_ctime, stat.st_ino, stat.st_size
@@ -220,13 +223,31 @@ class PostgresqlSqlScanner:
             #     continue -> 함수안에서 파일 존재 여부 체크 처리
             # step1 : sqlite DB에서 사용자 메일 수 뽑아올린다.
             try:
-                sqlite = SqliteConnector(mindex_path, company.id, user.id, company.name)
+                sqlite = SqliteConnector(mindex_path, company.id, user.id, company.name, is_webfolder=False)
             except FileNotFoundError as e:
                 company.not_exist_user_in_sqlite += 1
                 continue
+
             user.user_mail_count, user.user_mail_size = sqlite.get_target_mail_count(days)
             user.user_all_mail_count, user.user_all_mail_size = sqlite.get_target_mail_count(None)
 
+            ## 2023.01.27 자료실 메일 이관 대상 포함
+            sqlite_webfolder: Union[SqliteConnector, None] = None
+            webfolder_path = self.__make_webfolder_mindex_path(user)
+            if os.path.exists(webfolder_path) is True:
+                sqlite_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, is_webfolder=True)
+                webfolder_user_mail_count, webfolder_user_mail_size = sqlite_webfolder.get_target_mail_count(days)
+                webfolder_user_all_mail_count, webfolder_user_all_mail_size = sqlite_webfolder.get_target_mail_count(None)
+                user.user_all_mail_count += webfolder_user_all_mail_count
+                user.user_all_mail_size += webfolder_user_all_mail_size
+                if webfolder_user_mail_count < 0:
+                    user.user_mail_count += webfolder_user_mail_count
+                    user.user_mail_size += webfolder_user_mail_size
+                    self.logger.minor("WEBFOLDER detected : %s company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
+                        webfolder_path, company.name, user.name, user.login_id, webfolder_user_mail_count, webfolder_user_mail_size))
+                else:
+                    sqlite_webfolder = None
+            ## End-Add
 
             self.logger.minor("company: %s, user: %s, login_id: %s, mail-count: %d, mail-size: %d" % (
                 company.name, user.name, user.login_id, user.user_mail_count, user.user_mail_size))
@@ -240,6 +261,8 @@ class PostgresqlSqlScanner:
             # step2 : sqlite DB에서 각 사용자의 메일 목록 리스트업 한다.
             new_messages: List[MailMessage] = []
             messages: List[MailMessage] = self.__mail_source_path_filter(user, sqlite.get_target_mail_list(days))
+            if sqlite_webfolder is not None:
+                messages += self.__mail_source_path_filter(user, sqlite_webfolder.get_target_mail_list(days))
             user.user_mail_count = len(messages)  # 타겟 경로 검사기능떄문에, 필터링 된 결과로 다시 계산 해줘야 한다.
             user.user_mail_size = 0
 

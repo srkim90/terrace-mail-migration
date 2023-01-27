@@ -18,4 +18,5 @@ class MailMessage:
     st_ino: int
     st_size: int
     hardlink_count: int
+    is_webfolder: bool
     hardlinks: List[str]
