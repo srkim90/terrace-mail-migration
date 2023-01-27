@@ -468,7 +468,8 @@ class MailMigrationService:
                     uid_no=mail.uid_no,
                     del_full_path=delete_mail_path,
                     new_full_path=new_mail_path,
-                    msg_size=mail.msg_size
+                    msg_size=mail.msg_size,
+                    is_webfolder=mail.is_webfolder
                 ))
             else:
                 self.migration_logging.inc_migration_fail()
@@ -483,12 +484,20 @@ class MailMigrationService:
             conn_webfolder.disconnect()
         if commit_result is True:
             user_stat.commit_end_at = datetime.datetime.now()
+            check_conn_webfolder = None
             check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)
+            if os.path.exists(webfolder_path) is True:
+                check_conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False, is_webfolder=True)
             for rm_model in old_mails_to_delete:
+                selected_conn = check_conn
+                if rm_model.is_webfolder is True:
+                    selected_conn = check_conn_webfolder
                 if self.__final_check_and_delete_old_mail(rm_model, check_conn) is False:
                     self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
                     print_user_info(company, user), rm_model.del_full_path))
             check_conn.disconnect()
+            if check_conn_webfolder is not None:
+                check_conn_webfolder.disconnect()
         else:
             self.logger.error("Fail to commit : %s" % print_user_info(company, user))
             user_stat.commit_end_at = datetime.datetime.now()

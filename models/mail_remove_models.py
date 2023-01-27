@@ -11,3 +11,4 @@ class MailRemoveModels:
     del_full_path: str
     new_full_path: str
     msg_size: int
+    is_webfolder: bool
