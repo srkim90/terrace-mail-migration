@@ -509,9 +509,13 @@ class MailMigrationService:
 
         # 2. DB 경로와 일치하는지 체크
         db_full_path = conn.get_mail_file_name_in_db(rm_model.folder_no, rm_model.uid_no)
+        if db_full_path is None:
+            self.logger.error("Error. fail to get mail data in db : new_full_path=%s, folder_no=%s, uid_no=%s, db_path=%s"
+                              % (rm_model.new_full_path, rm_model.folder_no, rm_model.uid_no, conn.db_path,))
+            return False
         if self.__is_windows() is False:
             if os.path.samefile(db_full_path, rm_model.new_full_path) is False:
-                self.logger.error("not compare new mail with db : %s" % (rm_model.new_full_path,))
+                self.logger.error("not compare new mail with db : db_full_path=%s, new_full_path=%s" % (db_full_path, rm_model.new_full_path,))
                 return False
 
         # 3. 제거 하려는 파일과 이관한 파일의 내용이 동일한지 확인 (설정에 따라 cksum, size 지원)
