@@ -477,25 +477,30 @@ class MailMigrationService:
                 MailMigrationResult.builder(mail, result_type, new_mail_path)
             )
         user_stat.commit_start_at = datetime.datetime.now()
-        commit_result = conn.commit()
+        normal_mail_commit_result = conn.commit()
         conn.disconnect()
+        web_mail_commit_result = False
         if conn_webfolder is not None:
-            conn_webfolder.commit()
+            web_mail_commit_result = conn_webfolder.commit()
             conn_webfolder.disconnect()
-        if commit_result is True:
+        if normal_mail_commit_result is True or web_mail_commit_result is True:
             user_stat.commit_end_at = datetime.datetime.now()
             check_conn_webfolder = None
-            check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)
+            check_conn = None
+            if os.path.exists(sqlite_db_file_name) is True:
+                check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)
             if os.path.exists(webfolder_path) is True:
                 check_conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False, is_webfolder=True)
             for rm_model in old_mails_to_delete:
                 selected_conn = check_conn
                 if rm_model.is_webfolder is True:
                     selected_conn = check_conn_webfolder
-                if self.__final_check_and_delete_old_mail(rm_model, selected_conn) is False:
-                    self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
-                    print_user_info(company, user), rm_model.del_full_path))
-            check_conn.disconnect()
+                if selected_conn is not None:
+                    if self.__final_check_and_delete_old_mail(rm_model, selected_conn) is False:
+                        self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
+                        print_user_info(company, user), rm_model.del_full_path))
+            if check_conn is not None:
+                check_conn.disconnect()
             if check_conn_webfolder is not None:
                 check_conn_webfolder.disconnect()
         else:

@@ -22,7 +22,7 @@ def keep_socket(connection, address):
 def main():
     try:
         host_ipaddr = sys.argv[1]
-    except KeyError:
+    except IndexError:
         host_ipaddr = "127.0.0.1"
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

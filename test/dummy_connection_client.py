@@ -1,17 +1,27 @@
 
 import socket
 import sys
-import threading
+import time
 
 def main():
     try:
         host_ipaddr = sys.argv[1]
-    except KeyError:
+        count = int(sys.argv[2])
+    except IndexError:
         host_ipaddr = "127.0.0.1"
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((host_ipaddr, 5222))
-        s.sendall(b"Hello, world")
-        data = s.recv(1024)
+        count = 1
+    socket_list = []
+    for idx in range(count):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((host_ipaddr, 5222))
+            s.sendall(b"1")
+        except OSError:
+            print("stop connection %s: %d" % (host_ipaddr, idx,))
+            break
+        socket_list.append(s)
+        print("connection to %s: %d" % (host_ipaddr, idx,))
+    time.sleep(60*60*24)
     return
 
 if __name__ == "__main__":
