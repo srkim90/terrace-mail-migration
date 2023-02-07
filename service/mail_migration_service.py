@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 import platform
@@ -233,7 +234,7 @@ class MailMigrationService:
                 pass
         full_new_file = os.path.join(new_dir, file_name)
         if os.path.exists(full_new_file) is True:
-            self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재합니다. : full_new_file=%s, %s" %
+            self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재 합니다. : full_new_file=%s, %s" %
                               (full_new_file, self.__make_log_identify()))
             return MailMigrationResultType.ALREADY_MOVED_AND_REMAIN_OLD_MAIL_FILES, None
         # self.convert_mail_dir_volume_to_same_first_hardlink_test(full_new_file, full_new_file)
@@ -416,6 +417,20 @@ class MailMigrationService:
     def __make_webfolder_mindex_path(self, user: User) -> str:
         return make_data_file_path(user.message_store, ["etc", "WEBFOLDER", "_mcache.db"], dir_modify=False)
 
+    def __make_dbg_data(self, data, name: str, uid):
+        dbg_dir = "/data/tmp"
+        if data is None:
+            return
+        if os.path.exists(dbg_dir) is True:
+            if type(data) == bytes:
+                pass
+            elif type(data) == str:
+                data = data.encode()
+            else:
+                data = json.dumps(data, indent=4).encode()
+            with open(os.path.join(dbg_dir, "%s_%d.json" % (name, uid)), "wb") as fd:
+                fd.write(data)
+
     def __handle_a_user(self, user: User) -> UserMigrationResult:
         user_stat = self.__init_user_statistic(user)
         company = self.company
@@ -476,6 +491,7 @@ class MailMigrationService:
             user_stat.update_mail_migration_result(
                 MailMigrationResult.builder(mail, result_type, new_mail_path)
             )
+        self.__make_dbg_data(old_mails_to_delete, "old_mails_to_delete", user.id)
         user_stat.commit_start_at = datetime.datetime.now()
         normal_mail_commit_result = conn.commit()
         conn.disconnect()
