@@ -430,13 +430,13 @@ class MailMigrationService:
                 new_data = []
                 for item in data:
                     if type(item) == MailRemoveModels:
-                        item = MailRemoveModels.to_json(item, indent=4, ensure_ascii=False)
+                        item = MailRemoveModels.to_dict(item, indent=4, ensure_ascii=False)
                     elif type(item) == bytes:
                         pass
                     elif type(item) == str:
                         item = item.encode()
                     new_data.append(item)
-                data = new_data
+                data = json.dumps(new_data, indent=4).encode()
             else:
                 data = json.dumps(data, indent=4).encode()
             with open(os.path.join(dbg_dir, "%s_%d.json" % (name, uid)), "wb") as fd:
