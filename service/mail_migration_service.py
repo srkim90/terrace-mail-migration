@@ -430,7 +430,7 @@ class MailMigrationService:
                 new_data = []
                 for item in data:
                     if type(item) == MailRemoveModels:
-                        item = MailRemoveModels.to_dict(item, indent=4, ensure_ascii=False)
+                        item = MailRemoveModels.to_json(item, indent=4, ensure_ascii=False)
                     elif type(item) == bytes:
                         pass
                     elif type(item) == str:
