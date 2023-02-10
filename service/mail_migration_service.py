@@ -502,7 +502,7 @@ class MailMigrationService:
             user_stat.update_mail_migration_result(
                 MailMigrationResult.builder(mail, result_type, new_mail_path)
             )
-        self.__make_dbg_data(old_mails_to_delete, "old_mails_to_delete", user.id)
+        #self.__make_dbg_data(old_mails_to_delete, "old_mails_to_delete", user.id)
         user_stat.commit_start_at = datetime.datetime.now()
         normal_mail_commit_result = conn.commit()
         conn.disconnect()
