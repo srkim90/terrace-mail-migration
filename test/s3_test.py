@@ -4,8 +4,8 @@ from test.s3_up_downloader import S3UpDownLoader
 def main() -> None:
     file_name = 'C:\\Users\\shshr\\Documents\\Windows.iso'
     BUCKET_NAME = "srkim-bucket-20230307"
-    ACCESS_KEY = "AKIARGW5VC2GQ3BFXPFW"
-    SECRET_KEY = "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"
+    ACCESS_KEY = "MMMMMMMMMMMMMMMMMMMM"
+    SECRET_KEY = "NNNNNNNNNNNNNNNNN"
     ENDPOINT_URL = None
 
     s3_updownloader = S3UpDownLoader(
