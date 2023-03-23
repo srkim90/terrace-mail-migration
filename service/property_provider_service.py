@@ -35,10 +35,12 @@ def handle_threshold_ratio(property_value: str) -> Union[int, List[Tuple[str, in
         return int(property_value)
     except ValueError as e:
         pass
+    volume_dict = {}
     result_list: List[Tuple[str, int, str]] = []
     for line in property_value.split(","):
         if ":" not in line:
             continue
+
         volume = line.split(":")[0].strip()
         value = line.split(":")[1].strip().lower()
         numbers = int(re.sub(r'[^0-9]', '', value))
@@ -54,7 +56,11 @@ def handle_threshold_ratio(property_value: str) -> Union[int, List[Tuple[str, in
         elif 'tb' in value:
             numbers = numbers * 1024 * 1024 * 1024 * 1024
         #print("volume=%s, value=%s, unit=%s" % (volume, numbers, unit))
-        result_list.append((volume, numbers, unit))
+        volume_dict[volume] = (volume, numbers, unit)
+    vol_list = list(volume_dict.keys())
+    vol_list.sort(key=len, reverse=True)
+    for volume in vol_list:
+        result_list.append(volume_dict[volume])
     return result_list
 
 
