@@ -45,16 +45,18 @@ def handle_threshold_ratio(property_value: str) -> Union[int, List[Tuple[str, in
         value = line.split(":")[1].strip().lower()
         numbers = int(re.sub(r'[^0-9]', '', value))
         unit = "%"
-        if numbers >= 101:
-            unit = "byte"
         if 'kb' in value:
             numbers = numbers * 1024
+            unit = "byte"
         elif 'mb' in value:
             numbers = numbers * 1024 * 1024
+            unit = "byte"
         elif 'gb' in value:
             numbers = numbers * 1024 * 1024 * 1024
+            unit = "byte"
         elif 'tb' in value:
             numbers = numbers * 1024 * 1024 * 1024 * 1024
+            unit = "byte"
         #print("volume=%s, value=%s, unit=%s" % (volume, numbers, unit))
         volume_dict[volume] = (volume, numbers, unit)
     vol_list = list(volume_dict.keys())
