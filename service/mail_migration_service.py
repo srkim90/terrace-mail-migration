@@ -166,18 +166,18 @@ class MailMigrationService:
                 if path != dev_name:
                     continue
                 check_result = self.__check_dev_ratio_is_over(value, check_type, ratio, used_size)
-                self.logger.info("check_ratio_is_over <case1 config dev> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s, dev_name=%s" % (check_result, value, check_type, ratio, used_size, ratio, path, dev_name))
+                self.logger.debug("check_ratio_is_over <case1 config dev> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s, dev_name=%s" % (check_result, value, check_type, ratio, used_size, ratio, path, dev_name))
                 return check_result, ratio
             if input_default_ratio is None:
                 check_type = "%"
                 check_result = self.__check_dev_ratio_is_over(src_default_ratio, check_type, ratio, used_size)
-                self.logger.info(
+                self.logger.debug(
                     "check_ratio_is_over <case2 system default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s" % (
                     check_result, src_default_ratio, check_type, ratio, used_size, ratio, path))
                 return check_result, ratio
             else:
                 check_result = self.__check_dev_ratio_is_over(input_default_ratio, input_default_type, ratio, used_size)
-                self.logger.info(
+                self.logger.debug(
                     "check_ratio_is_over <case3 config default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s" % (
                     check_result, input_default_ratio, input_default_type, ratio, used_size, ratio, path))
                 return check_result, ratio
