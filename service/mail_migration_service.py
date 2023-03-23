@@ -129,6 +129,12 @@ class MailMigrationService:
         else:
             return value <= ratio
 
+    # def __make_sub_path_to_compare_volume(self, path: str, vol_name: str) -> str:
+    #     # path에서 볼륨명과 비교 할 영역을 찾는데, 단순 비교를 해버리면 부분집합에 걸려서 개판됨
+    #     # 이건 비교할 대상을 / 까지 잘라서 가져오는 함수
+    #     # path = /
+    #     return
+
     def __check_ratio_is_over(self, path: str, threshold_ratio: Union[int, List[Tuple[str, int, str]]]) -> Tuple[
         bool, float]:
         src_default_ratio = 99
@@ -152,26 +158,28 @@ class MailMigrationService:
                     input_default_type = check_type
                     continue
 
-                dev_name_len = len(dev_name)
-                if len(path) < dev_name_len:
-                    continue
-                if path[0:dev_name_len] != dev_name:
+                # dev_name_len = len(dev_name)
+                # if len(path) < dev_name_len:
+                #     continue
+                # if path[0:dev_name_len] != dev_name:
+                #     continue
+                if path != dev_name:
                     continue
                 check_result = self.__check_dev_ratio_is_over(value, check_type, ratio, used_size)
-                self.logger.info("check_ratio_is_over <case1 config dev> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (check_result, value, check_type, ratio, used_size, ratio))
+                self.logger.info("check_ratio_is_over <case1 config dev> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s, dev_name=%s" % (check_result, value, check_type, ratio, used_size, ratio, path, dev_name))
                 return check_result, ratio
             if input_default_ratio is None:
                 check_type = "%"
                 check_result = self.__check_dev_ratio_is_over(src_default_ratio, check_type, ratio, used_size)
                 self.logger.info(
-                    "check_ratio_is_over <case2 system default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (
-                    check_result, src_default_ratio, check_type, ratio, used_size, ratio))
+                    "check_ratio_is_over <case2 system default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s" % (
+                    check_result, src_default_ratio, check_type, ratio, used_size, ratio, path))
                 return check_result, ratio
             else:
                 check_result = self.__check_dev_ratio_is_over(input_default_ratio, input_default_type, ratio, used_size)
                 self.logger.info(
-                    "check_ratio_is_over <case3 config default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (
-                    check_result, input_default_ratio, input_default_type, ratio, used_size, ratio))
+                    "check_ratio_is_over <case3 config default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s, path=%s" % (
+                    check_result, input_default_ratio, input_default_type, ratio, used_size, ratio, path))
                 return check_result, ratio
 
     def __select_move_target_dir_in(self) -> str:
