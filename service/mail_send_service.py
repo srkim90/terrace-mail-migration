@@ -122,7 +122,7 @@ class MailSendService:
 
 
 def send_all(mail_to: Union[str, List[str]], to_all: bool, n_send_mail: int = -1):
-    e = MailSendService("127.0.0.1", 25, "srkim@abctest.co.co", "port2093@")
+    e = MailSendService("127.0.0.1", 25, "srkim@abctest.co.co", "*************")
     mail_list = e.load_mail_data(n_send_mail)
     e.send_mail(mail_to, mail_list, to_all)
     return

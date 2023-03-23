@@ -1,6 +1,7 @@
 import datetime
 import os
-from typing import List, Union
+import re
+from typing import List, Union, Tuple
 
 from pydantic import BaseSettings
 from dependency_injector import containers, providers
@@ -29,17 +30,49 @@ class SystemSettings:
     max_migration_process: int = get_property()["system"]["max-migration-process"]
 
 
+def handle_threshold_ratio(property_value: str) -> Union[int, List[Tuple[str, int, str]]]:
+    try:
+        return int(property_value)
+    except ValueError as e:
+        pass
+    result_list: List[Tuple[str, int, str]] = []
+    for line in property_value.split(","):
+        if ":" not in line:
+            continue
+        volume = line.split(":")[0].strip()
+        value = line.split(":")[1].strip().lower()
+        numbers = int(re.sub(r'[^0-9]', '', value))
+        unit = "%"
+        if numbers >= 101:
+            unit = "byte"
+        if 'kb' in value:
+            numbers = numbers * 1024
+        elif 'mb' in value:
+            numbers = numbers * 1024 * 1024
+        elif 'gb' in value:
+            numbers = numbers * 1024 * 1024 * 1024
+        elif 'tb' in value:
+            numbers = numbers * 1024 * 1024 * 1024 * 1024
+        #print("volume=%s, value=%s, unit=%s" % (volume, numbers, unit))
+        result_list.append((volume, numbers, unit))
+    return result_list
+
+
 class MailMoveSettings:
     property = get_property()["mail"]
     mindex_path: str = property["path"]["mindex-path"]
     origin_mdata_path: List[str] = parser_dir_list(property["path"]["origin-mdata-path"])
     new_mdata_path: List[str] = parser_dir_list(property["path"]["new-mdata-path"])
-    partition_capacity_threshold_ratio: int = int(property["partition-capacity-threshold-ratio"])
+    partition_capacity_threshold_ratio: Union[int, List[Tuple[str, int, str]]] = handle_threshold_ratio(property["partition-capacity-threshold-ratio"]) #
     move_strategy: MoveStrategyType = move_strategy_type_converter(property["move-strategy"])
     enable_hardlink: str = bool(property["enable-hardlink"])
     final_check_method: str = "size"
     if "final-check-method" in property.keys():
         final_check_method: str = property["final-check-method"]
+
+
+
+
 
 
 class DateRangeSettings:

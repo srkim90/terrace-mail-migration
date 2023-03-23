@@ -15,14 +15,23 @@ logging:
 mail:
   final-check-method: md5sum # md5sum, size, none (default: size)
   enable-hardlink: true
-  partition-capacity-threshold-ratio: 90
+  partition-capacity-threshold-ratio: "
+      /data/mdata2: 50%,
+      /data/mdata3: 8888MB,
+      /data/mdata4: 888GB,
+      /data/mdata5: 888800KB,
+      /data/mdata6: 8888000000B,
+      /data/mdata7: 8888000001,
+      /data/mdata8: 66%,
+      default: 80%
+  "
   move-strategy: REMAINING_CAPACITY_LOWER_PRIORITY # ROUND_ROBIN, REMAINING_CAPACITY_LOWER_PRIORITY, REMAINING_CAPACITY_HIGHER_PRIORITY
   path:
     mindex-path: D:\data\mindex\opt\TerraceTims\mindex # 스캔용도, 이관시에는 DB값 참조해서 찾는다.
-    #origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
-    #new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
-    origin-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
-    new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
+    origin-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
+    new-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #origin-mdata-path: D:\data\mindex\opt\TerraceTims\new_mdata
+    #new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
 database:
   postgresql:
     host: 172.22.1.103

@@ -51,9 +51,10 @@ class MailMigrationService:
     setting_provider: ApplicationSettings = application_container.setting_provider
     company_stat: CompanyMigrationResult
     work_queue: Union[List[Tuple[User, int]], None]
-    total_handle_mails : int
+    total_handle_mails: int
 
-    def __init__(self, total_handle_mails: int, now_idx: int, company: Company, global_scan_statistic: ScanStatistic) -> None:
+    def __init__(self, total_handle_mails: int, now_idx: int, company: Company,
+                 global_scan_statistic: ScanStatistic) -> None:
         super().__init__()
         self.total_handle_mails = total_handle_mails
         self.now_idx = now_idx
@@ -89,7 +90,7 @@ class MailMigrationService:
             user_result_type_classify={},
             mail_result_type_classify={},
             company_mail_size=self.company.company_mail_size
-            #results=[]
+            # results=[]
         )
 
     def __is_windows(self) -> bool:
@@ -107,19 +108,71 @@ class MailMigrationService:
                 return True
         return False
 
-    def __calc_volume_used_ratio(self, path: str):
+    def __calc_volume_used_ratio(self, path: str) -> Tuple[float, int]:
         if is_windows() is True:
-            return 0.0
+            return 0.0, 0
         info = os.statvfs(path)
         size = info.f_bsize * info.f_blocks
         free = info.f_bsize * info.f_bavail
-        return (1.0 - (free / size)) * 100.0
+        used = size - free
+        return (1.0 - (free / size)) * 100.0, used
 
     def __select_move_target_dir(self) -> str:
         val = self.__select_move_target_dir_in()
         strategy: MoveStrategyType = self.move_setting.move_strategy
         self.logger.debug("__select_move_target_dir: %s, strategy: %s" % (val, strategy.name))
         return val
+
+    def __check_dev_ratio_is_over(self, value: int, check_type: str, ratio: float, used_size: int) -> bool:
+        if check_type.lower() == "byte":
+            return value >= used_size
+        else:
+            return value >= ratio
+
+    def __check_ratio_is_over(self, path: str, threshold_ratio: Union[int, List[Tuple[str, int, str]]]) -> Tuple[
+        bool, float]:
+        src_default_ratio = 99
+        input_default_ratio = None
+        input_default_type = None
+        if is_windows() is True:
+            return True, 0.0
+        ratio, used_size = self.__calc_volume_used_ratio(path)
+        # 2023.03.22 : 운영팀 요구사항 반영 => 디스크별로 임계치 개산 하도록 해주세요~
+        if type(ratio) == int:
+            is_full = (ratio >= threshold_ratio)
+            return is_full, ratio
+        else:
+            for threshold in threshold_ratio:
+                dev_name = threshold[0]
+                value = threshold[1]
+                check_type = threshold[2]
+
+                if dev_name.lower() == "default":
+                    input_default_ratio = value
+                    input_default_type = check_type
+                    continue
+
+                dev_name_len = len(dev_name)
+                if len(path) < dev_name_len:
+                    continue
+                if path[0:dev_name_len] != dev_name:
+                    continue
+                check_result = self.__check_dev_ratio_is_over(value, check_type, ratio, used_size)
+                self.logger.info("check_ratio_is_over <case1 config dev> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (check_result, value, check_type, ratio, used_size, ratio))
+                return check_result, ratio
+            if input_default_ratio is None:
+                check_type = "%"
+                check_result = self.__check_dev_ratio_is_over(src_default_ratio, check_type, ratio, used_size)
+                self.logger.info(
+                    "check_ratio_is_over <case2 system default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (
+                    check_result, src_default_ratio, check_type, ratio, used_size, ratio))
+                return check_result, ratio
+            else:
+                check_result = self.__check_dev_ratio_is_over(input_default_ratio, input_default_type, ratio, used_size)
+                self.logger.info(
+                    "check_ratio_is_over <case3 config default> : check_result=%s, value=%s, check_type=%s, ratio=%s, used_size=%s, ratio=%s" % (
+                    check_result, input_default_ratio, input_default_type, ratio, used_size, ratio))
+                return check_result, ratio
 
     def __select_move_target_dir_in(self) -> str:
         threshold_ratio = self.move_setting.partition_capacity_threshold_ratio
@@ -131,8 +184,11 @@ class MailMigrationService:
         max_ratio = None
         min_ratio = None
         for path in self.move_setting.new_mdata_path:
-            ratio = self.__calc_volume_used_ratio(path)
-            if ratio >= threshold_ratio:
+            # ratio = self.__calc_volume_used_ratio(path)
+            # if ratio >= threshold_ratio:
+            #    continue
+            is_full, ratio = self.__check_ratio_is_over(path, threshold_ratio)
+            if is_full is True:
                 continue
             avail_list.append([ratio, path, ])
             if max_ratio is None or ratio > max_ratio:
@@ -202,7 +258,8 @@ class MailMigrationService:
             return None
         return os.path.join(index1, index2, index3, yyyymmdd)
 
-    def __copy_mail_file(self, mail: MailMessage) -> Union[Tuple[MailMigrationResultType, str], Tuple[MailMigrationResultType, None]]:
+    def __copy_mail_file(self, mail: MailMessage) -> Union[
+        Tuple[MailMigrationResultType, str], Tuple[MailMigrationResultType, None]]:
         org_full_path = mail.full_path
         new_mdata_path = self.__select_move_target_dir()
         if self.__check_origin_mdata_path(org_full_path) is False:
@@ -213,7 +270,7 @@ class MailMigrationService:
             self.logger.debug("이관할 파일이 존재하지 않습니다. : org_full_path=%s, %s" %
                               (org_full_path, self.__make_log_identify()))
             stat: MailMigrationResultType = MailMigrationResultType.ALREADY_REMOVED if \
-                self.__check_already_moved(org_full_path) else  MailMigrationResultType.NOT_EXIST_MAIL_FILE_TO_MOVE
+                self.__check_already_moved(org_full_path) else MailMigrationResultType.NOT_EXIST_MAIL_FILE_TO_MOVE
             return stat, None
         elif new_mdata_path is None:
             self.logger.error("이동 대상 디렉토리가 존재하지 않거나, 유효하지 않습니다. : new_mdata_path=%s, %s" %
@@ -223,7 +280,7 @@ class MailMigrationService:
         select_move_target_dir = self.__select_move_target_dir()
         m_data_subdir = self.__m_data_subdir_parser(org_full_path)
         self.logger.debug("new_mdata_path: %s, select_move_target_dir: %s, m_data_subdir: %s" % (
-        new_mdata_path, select_move_target_dir, m_data_subdir))
+            new_mdata_path, select_move_target_dir, m_data_subdir))
         new_dir = os.path.join(select_move_target_dir, m_data_subdir)
         new_dir = os.path.join(new_mdata_path, new_dir)
         self.logger.debug("new_dir: %s" % (new_dir,))
@@ -290,8 +347,10 @@ class MailMigrationService:
             if os.path.exists(dir_name) is False:
                 os.makedirs(dir_name)
         except PermissionError:
-            self.logger.error("[__convert_mail_dir_volume_to_same_first_hardlink] same_eml: %s, full_new_file: %s, same_eml_volume_path: %s, new_eml_volume_path: %s, org_full_new_file: %s, file_name: %s, dir_name:%s" %
-                  (same_eml, full_new_file, same_eml_volume_path, new_eml_volume_path, org_full_new_file, file_name, dir_name))
+            self.logger.error(
+                "[__convert_mail_dir_volume_to_same_first_hardlink] same_eml: %s, full_new_file: %s, same_eml_volume_path: %s, new_eml_volume_path: %s, org_full_new_file: %s, file_name: %s, dir_name:%s" %
+                (same_eml, full_new_file, same_eml_volume_path, new_eml_volume_path, org_full_new_file, file_name,
+                 dir_name))
             raise PermissionError
         return full_new_file
 
@@ -342,7 +401,8 @@ class MailMigrationService:
             self.logger.minor("Fail to create new mail file: %s" % self.__make_log_identify(user))
             return False, None, None, stat
         self.migration_logging.inc_sqlite_update_query()
-        result = sqlite.update_mail_path(mail.folder_no, mail.uid_no, new_full_path, old_full_path, mail.email_file_coding)
+        result = sqlite.update_mail_path(mail.folder_no, mail.uid_no, new_full_path, old_full_path,
+                                         mail.email_file_coding)
         if result is False:
             os.remove(new_full_path)
             self.migration_logging.inc_migration_fail_sqlite_db_update_fail()
@@ -459,7 +519,8 @@ class MailMigrationService:
             sqlite_webfolder: Union[SqliteConnector, None] = None
             webfolder_path = self.__make_webfolder_mindex_path(user)
             if os.path.exists(webfolder_path) is True:
-                conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False, is_webfolder=True)
+                conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False,
+                                                 is_webfolder=True)
         except Exception as e:
             self.logger.error("start user mail transfer error: %s, error-message=%s"
                               % (self.__make_log_identify(user), str_stack_trace()))
@@ -502,7 +563,7 @@ class MailMigrationService:
             user_stat.update_mail_migration_result(
                 MailMigrationResult.builder(mail, result_type, new_mail_path)
             )
-        #self.__make_dbg_data(old_mails_to_delete, "old_mails_to_delete", user.id)
+        # self.__make_dbg_data(old_mails_to_delete, "old_mails_to_delete", user.id)
         user_stat.commit_start_at = datetime.datetime.now()
         normal_mail_commit_result = conn.commit()
         conn.disconnect()
@@ -517,7 +578,8 @@ class MailMigrationService:
             if os.path.exists(sqlite_db_file_name) is True:
                 check_conn = SqliteConnector(sqlite_db_file_name, company.id, user.id, company.name, readonly=True)
             if os.path.exists(webfolder_path) is True:
-                check_conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, readonly=False, is_webfolder=True)
+                check_conn_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name,
+                                                       readonly=False, is_webfolder=True)
             for rm_model in old_mails_to_delete:
                 selected_conn = check_conn
                 if rm_model.is_webfolder is True:
@@ -525,7 +587,7 @@ class MailMigrationService:
                 if selected_conn is not None:
                     if self.__final_check_and_delete_old_mail(rm_model, selected_conn) is False:
                         self.logger.info("Fail to delete mail : %s, del_full_path=%s" % (
-                        print_user_info(company, user), rm_model.del_full_path))
+                            print_user_info(company, user), rm_model.del_full_path))
             if check_conn is not None:
                 check_conn.disconnect()
             if check_conn_webfolder is not None:
@@ -551,12 +613,14 @@ class MailMigrationService:
         # 2. DB 경로와 일치하는지 체크
         db_full_path = conn.get_mail_file_name_in_db(rm_model.folder_no, rm_model.uid_no)
         if db_full_path is None:
-            self.logger.error("Error. fail to get mail data in db : new_full_path=%s, folder_no=%s, uid_no=%s, db_path=%s"
-                              % (rm_model.new_full_path, rm_model.folder_no, rm_model.uid_no, conn.db_path,))
+            self.logger.error(
+                "Error. fail to get mail data in db : new_full_path=%s, folder_no=%s, uid_no=%s, db_path=%s"
+                % (rm_model.new_full_path, rm_model.folder_no, rm_model.uid_no, conn.db_path,))
             return False
         if self.__is_windows() is False:
             if os.path.samefile(db_full_path, rm_model.new_full_path) is False:
-                self.logger.error("not compare new mail with db : db_full_path=%s, new_full_path=%s" % (db_full_path, rm_model.new_full_path,))
+                self.logger.error("not compare new mail with db : db_full_path=%s, new_full_path=%s" % (
+                db_full_path, rm_model.new_full_path,))
                 return False
 
         # 3. 제거 하려는 파일과 이관한 파일의 내용이 동일한지 확인 (설정에 따라 cksum, size 지원)
@@ -588,8 +652,10 @@ class MailMigrationService:
     def run(self, user_ids: Union[List[int], None] = None) -> CompanyMigrationResult:
         total_company_cnt = self.global_scan_statistic.available_company_count
         total_mail_cnt = self.global_scan_statistic.company_mail_count
-        now_count = "company=[%d/%d], mail=[%d/%d]" % (self.now_idx, total_company_cnt, self.total_handle_mails, total_mail_cnt)
-        after_count = "company=[%d/%d], mail=[%d/%d]" % (self.now_idx + 1, total_company_cnt, self.total_handle_mails + self.company.company_mail_count, total_mail_cnt)
+        now_count = "company=[%d/%d], mail=[%d/%d]" % (
+        self.now_idx, total_company_cnt, self.total_handle_mails, total_mail_cnt)
+        after_count = "company=[%d/%d], mail=[%d/%d]" % (
+        self.now_idx + 1, total_company_cnt, self.total_handle_mails + self.company.company_mail_count, total_mail_cnt)
         self.logger.info("=====================================================")
         self.logger.info("%s start company mail transfer: %s" % (now_count, self.__make_log_identify(),))
         for idx, user_json_path in enumerate(self.company.users):
@@ -602,10 +668,10 @@ class MailMigrationService:
                 continue
             if user_ids is not None and user.id not in user_ids:
                 continue
-            #result: UserMigrationResult = self.__handle_a_user(user)
-            #self.company_stat.update_company_scan_result(result)
-            #self.__save_user_migration_result(user, result)
-            #self.__handle_a_user_th(user)
+            # result: UserMigrationResult = self.__handle_a_user(user)
+            # self.company_stat.update_company_scan_result(result)
+            # self.__save_user_migration_result(user, result)
+            # self.__handle_a_user_th(user)
             self.__run_user_th(user, idx, len(self.company.users))
         self.__wait_for_user_threads()
         self.company_stat.terminate_company_scan()

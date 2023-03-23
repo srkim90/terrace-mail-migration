@@ -1,6 +1,5 @@
 import logging
 
-import sys
 from common_import import *
 from main.cmd.command_line_parser import read_scan_options
 from main.cmd.scan_command_option_models import ScanCommandOptions

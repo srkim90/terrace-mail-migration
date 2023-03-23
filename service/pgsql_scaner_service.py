@@ -238,7 +238,7 @@ class PostgresqlSqlScanner:
                 sqlite_webfolder = SqliteConnector(webfolder_path, company.id, user.id, company.name, is_webfolder=True)
                 webfolder_user_mail_count, webfolder_user_mail_size = sqlite_webfolder.get_target_mail_count(days)
                 webfolder_user_all_mail_count, webfolder_user_all_mail_size = sqlite_webfolder.get_target_mail_count(None)
-                user.user_all_mail_count += webfolder_user_all_mail_count
+                user.user_all_mail_count += webfolder_user_all_mail_count # 11111
                 user.user_all_mail_size += webfolder_user_all_mail_size
                 if webfolder_user_mail_count > 0:
                     user.user_mail_count += webfolder_user_mail_count
