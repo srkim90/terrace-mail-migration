@@ -125,9 +125,9 @@ class MailMigrationService:
 
     def __check_dev_ratio_is_over(self, value: int, check_type: str, ratio: float, used_size: int) -> bool:
         if check_type.lower() == "byte":
-            return value >= used_size
+            return value <= used_size
         else:
-            return value >= ratio
+            return value <= ratio
 
     def __check_ratio_is_over(self, path: str, threshold_ratio: Union[int, List[Tuple[str, int, str]]]) -> Tuple[
         bool, float]:
@@ -202,6 +202,8 @@ class MailMigrationService:
             elif ratio == min_ratio:
                 min_idxs.append(idx)
             idx += 1
+        if len(avail_list) == 0:
+            raise FileExistsError("가용한 이관 대상 파티션이 하나도 없습니다. threshold_ratio: %s" % (threshold_ratio, ))
         if strategy == MoveStrategyType.RANDOM or strategy == MoveStrategyType.ROUND_ROBIN:
             return avail_list[random.randrange(0, len(avail_list))][1]
         elif strategy == MoveStrategyType.REMAINING_CAPACITY_HIGHER_PRIORITY:
