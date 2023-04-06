@@ -45,7 +45,7 @@ def handle_threshold_ratio(property_value: str) -> Union[int, List[Tuple[str, in
         value = line.split(":")[1].strip().lower()
         numbers = int(re.sub(r'[^0-9]', '', value))
         unit = "%"
-        if 'byte' in value or 'b' in value :
+        if 'byte' in value or 'b' in value:
             numbers = numbers * 1
             unit = "byte"
         elif 'kb' in value:

@@ -144,7 +144,7 @@ class MailMigrationService:
             return True, 0.0
         ratio, used_size = self.__calc_volume_used_ratio(path)
         # 2023.03.22 : 운영팀 요구사항 반영 => 디스크별로 임계치 개산 하도록 해주세요~
-        if type(ratio) == int:
+        if type(threshold_ratio) == int:
             is_full = (ratio >= threshold_ratio)
             return is_full, ratio
         else:
