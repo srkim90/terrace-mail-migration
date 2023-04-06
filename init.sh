@@ -3,7 +3,7 @@
 CENTOS_VER=`cat /etc/redhat-release  | awk -F 'release' '{print $2}' | tr -d ' ' | cut -d '.' -f 1`
 if [ ${CENTOS_VER} == 6 ]; then
     PYTHON_VER=3.6.15
-elif [ ${CENTOS_VER} == 7 ]; then
+elif [ ${CENTOS_VER} == 7 ] || [ ${CENTOS_VER} == 8 ]; then
     PYTHON_VER=3.9.14
 else
     echo "Error. Invalid CensOS version!!"
