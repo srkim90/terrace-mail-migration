@@ -8,8 +8,6 @@ import sys
 import threading
 from typing import Dict, List, Union
 
-from models.user_models import User
-
 MAX_WORK_PROC = 8
 # TIME_SOURCE = "msg_receive"  # DB에 저장된 수신 된 값 기준으로 결과 산출
 TIME_SOURCE = "st_ctime"  # 파일 자체의 c_time 기준으로 결과 산출
@@ -39,7 +37,7 @@ class PartitionCapacityCalc:
         return True
 
     @staticmethod
-    def __load_user(user_json: bytes) -> User:
+    def __load_user(user_json: bytes) -> dict:
         user_dict = json.loads(user_json)
         return user_dict
         # for message in user_dict["messages"]:
@@ -60,7 +58,7 @@ class PartitionCapacityCalc:
             yyyymm, data_size, gb_data_size, per_tb_threshold))
 
     @staticmethod
-    def __handle_a_user(user: User, date_mail_size_classify: Dict[str, int]):
+    def __handle_a_user(user, date_mail_size_classify: Dict[str, int]):
         for message in user["messages"]:
             hardlink_count = int(message["hardlink_count"])
             hardlink_count = 1 if hardlink_count <= 0 else hardlink_count
@@ -150,10 +148,12 @@ class PartitionCapacityCalc:
 
 
 def print_help(error_message: str):
+    print("\n\n\n\n")
     print("Invalid input parameter : %s" % (error_message,))
-    print("사용법: python partition_capacity_calc.py [scan-report 1] [scan-report 2] [scan-report 3] .....")
-    print("ex   : python partition_capacity_calc.py 20221203_203500")
+    print("사용법: ./capacity_calc.sh [scan-report 1] [scan-report 2] [scan-report 3] .....")
+    print("ex   : ./capacity_calc.sh /opt/mail-migration-data/report/20230406_151148")
     print("tip  : 서로 다른 장비에서 스캔한 복수개의 결과를 취합 하고 싶다면 파라미터로 각각의 scan-report를 줄줄이 입력하시오 ")
+    print("\n\n\n\n")
     return
 
 
@@ -164,7 +164,7 @@ def check_param() -> List[str]:
     for idx, path in enumerate(sys.argv):
         if idx == 0:
             continue
-        if os.path.exists(path) is False or os.path.isdir(path):
+        if os.path.exists(path) is False or os.path.isdir(path) is False:
             print_help("유효하지 않는 scan-report 경로 '%s'" % (path,))
             exit(-1)
         paths.append(path)
