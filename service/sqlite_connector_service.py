@@ -1,6 +1,7 @@
 import base64
 import os
 import sqlite3
+import time
 from typing import Tuple, List, Union, Dict
 
 from models.day_models import Days
@@ -23,7 +24,8 @@ class SqliteConnector:
     conn = None
     mbackup_conn = None
 
-    def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, is_webfolder: bool = False, readonly: bool = True) -> None:
+    def __init__(self, db_path: str, company_id: int, user_id: int, company_name: str, is_webfolder: bool = False,
+                 readonly: bool = True) -> None:
         super().__init__()
         self.readonly = readonly
         self.company_id = company_id
@@ -37,8 +39,9 @@ class SqliteConnector:
     def make_mbackup_conn(self) -> bool:
         db_name: str = self.db_path.replace("_mcache.db", "_mbackup.db")
         if os.path.exists(db_name) is False:
-            self.logger.info("[company_id=%s, user_id=%s] not exist _mcache.db : %s, skip, _mbackup.db update" % (self.company_id, self.user_id, db_name,))
-            #raise FileNotFoundError("not exist _mcache.db : %s" % (db_name,))
+            self.logger.info("[company_id=%s, user_id=%s] not exist _mcache.db : %s, skip, _mbackup.db update" % (
+                self.company_id, self.user_id, db_name,))
+            # raise FileNotFoundError("not exist _mcache.db : %s" % (db_name,))
             return False
         self.mbackup_conn = self.__db_conn(db_name, readonly=False)
         return True
@@ -46,7 +49,7 @@ class SqliteConnector:
     def __db_conn(self, db_path: str, readonly: bool = True):
         if os.path.exists(self.db_path) is False:
             self.logger.minor("Not found sqlite db : path=%s info=(%s)" % (self.db_path, self.__make_log_identify()))
-            raise FileNotFoundError("not exist sqlite db : %s" % (self.db_path, ))
+            raise FileNotFoundError("not exist sqlite db : %s" % (self.db_path,))
         try:
             if readonly is True:
                 conn = sqlite3.connect('file:%s?mode=ro' % db_path, uri=True)
@@ -54,7 +57,7 @@ class SqliteConnector:
                 conn = sqlite3.connect('file:%s' % db_path, uri=True)
         except sqlite3.NotSupportedError as e:
             conn = sqlite3.connect('%s' % db_path)
-        #conn.text_factory = str
+        # conn.text_factory = str
         conn.text_factory = bytes
         return conn
 
@@ -68,13 +71,13 @@ class SqliteConnector:
                           (self.company_id, self.user_id, query, coding))
         cur.execute(query, (memoryview(data.encode(coding)),))
 
-    def __check_eml_data(self, full_path: str) -> (float, int, int):
+    def __check_eml_data(self, full_path: str) -> (float, int, int, int, int):
         stat: os.stat_result = self.mail_checker.check_file_status(full_path)
-        return stat.st_ctime, stat.st_ino, stat.st_size
+        return stat.st_ctime, stat.st_ino, stat.st_size, stat.st_blocks, stat.st_blksize
 
     def __make_log_identify(self, folder_no: int = -1, uid_no: int = -1, message: str = ""):
         log_identify = "company_id=%d(%s), user_id=%d, readonly=%s" % (
-        self.company_id, self.company_name, self.user_id, self.readonly)
+            self.company_id, self.company_name, self.user_id, self.readonly)
         if folder_no != -1:
             log_identify += " folder_no=%d" % folder_no
         if uid_no != -1:
@@ -138,7 +141,6 @@ class SqliteConnector:
             result_dict[mail] = 1
         return result_dict
 
-
     def get_mail_all(self, only_name: bool = False) -> List[str]:
         mail_list: List[str] = []
         cur = self.conn.cursor()
@@ -152,7 +154,6 @@ class SqliteConnector:
             mail_list.append(full_path)
         cur.close()
         return mail_list
-
 
     def get_target_mail_count(self, days: Union[Days, None]) -> Tuple[int, int]:
         size = 0
@@ -175,14 +176,16 @@ class SqliteConnector:
         full_path = None
         cur = self.conn.cursor()
         self.__query_execute(cur,
-            "select full_path from mail_message where folder_no = %d and uid_no = %d" % (folder_no, uid_no))
+                             "select full_path from mail_message where folder_no = %d and uid_no = %d" % (
+                                 folder_no, uid_no))
         for idx, row in enumerate(cur):
             is_charset_ok, full_path, coding = try_bytes_decoding(row[0])
             if is_charset_ok is False:
                 continue
             if idx != 0:
-                self.logger.error("__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
-                                                                                                 uid_no=uid_no))
+                self.logger.error(
+                    "__get_mail_file_name_in_db not unique: %s" % self.__make_log_identify(folder_no=folder_no,
+                                                                                           uid_no=uid_no))
         return full_path
 
     def __validate_eml_path(self, new_full_path, old_full_path, folder_no: int, uid_no: int):
@@ -194,27 +197,42 @@ class SqliteConnector:
             return False
         if os.path.exists(new_full_path) is False:
             self.logger.error("Error. Not found new mail path : %s" % self.__make_log_identify(folder_no=folder_no,
-                                                                                       uid_no=uid_no,
-                                                                                       message=new_full_path, ))
+                                                                                               uid_no=uid_no,
+                                                                                               message=new_full_path, ))
             return False
 
         eml_file_name = new_full_path.split("/")[-1]
-        if "\\" in eml_file_name: ## 윈도우 테스트 환경 일 경우 (윈도우 불편.. ㅠㅠ, 맥을 사달라!)
+        if "\\" in eml_file_name:  ## 윈도우 테스트 환경 일 경우 (윈도우 불편.. ㅠㅠ, 맥을 사달라!)
             eml_file_name = eml_file_name.split("\\")[-1]
 
         if eml_file_name not in old_full_path:
             self.logger.error("Error.  : %s" % self.__make_log_identify(folder_no=folder_no,
-                                                                                       uid_no=uid_no,
-                                                                                       message=new_full_path, ))
+                                                                        uid_no=uid_no,
+                                                                        message=new_full_path, ))
             return False
-        old_ctime, old_ino, old_size = self.__check_eml_data(new_full_path)
-        new_ctime, new_ino, new_size = self.__check_eml_data(old_full_path)
-        if old_size != new_size or old_size == 0:
-            self.logger.error("Error. not compare mail size old and now : %s" % self.__make_log_identify(folder_no=folder_no,
-                                                                                                 uid_no=uid_no,
-                                                                                                 message=new_full_path,
-                                                                                                 ))
-            return False
+
+        max_retry = 3
+        for idx in range(max_retry):
+            old_ctime, old_ino, old_size, old_blocks, old_blksize = self.__check_eml_data(new_full_path)
+            new_ctime, new_ino, new_size, new_blocks, new_blksize = self.__check_eml_data(old_full_path)
+            if old_size != new_size or old_size == 0:
+                if idx+1 >= max_retry:
+                    self.logger.error(
+                        "Error. not compare mail size old and now : %s, max_retry=%d, "
+                        "old_full_path=%s, old_ctime=%s, old_ino=%s, old_size=%s, old_blocks=%s, old_blksize=%s, "
+                        "new_full_path=%s, new_ctime=%s, new_ino=%s, new_size=%s, new_blocks=%s, new_blksize=%s" % (
+                            self.__make_log_identify(folder_no=folder_no,
+                                                     uid_no=uid_no,
+                                                     message=new_full_path),
+                            max_retry,
+                            old_full_path, old_ctime, old_ino, old_size, old_blocks, old_blksize,
+                            new_full_path, new_ctime, new_ino, new_size, new_blocks, new_blksize, ))
+                    return False
+                else:
+                    time.sleep(0.1)
+                    continue
+            else: ## 용량 차이 없을 경우
+                break
         return True
 
     def __check_windows_dir(self, path: str):
@@ -229,18 +247,18 @@ class SqliteConnector:
         if self.mbackup_conn is None:
             return
         cur = self.mbackup_conn.cursor()
-        #new_full_path = self.__check_windows_dir(new_full_path)
-        #sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
+        # new_full_path = self.__check_windows_dir(new_full_path)
+        # sql = "update mail_message set full_path = '%s' where folder_no = %d and uid_no = %d" % (
         #   new_full_path, folder_no, uid_no)
         new_full_path = self.__check_windows_dir(new_full_path)
         sql = "update mail_message set full_path = ? where folder_no = %d and uid_no = %d" % (
-             folder_no, uid_no)
+            folder_no, uid_no)
         self.__query_execute_bytes(cur, sql, new_full_path, coding)
         cur.close()
         return
 
-
-    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str, old_full_path: str, coding: str, check_validate: bool = True) -> bool:
+    def update_mail_path(self, folder_no: int, uid_no: int, new_full_path: str, old_full_path: str, coding: str,
+                         check_validate: bool = True) -> bool:
         if check_validate is True:
             if self.__validate_eml_path(new_full_path, old_full_path, folder_no, uid_no) is False:
                 return False
@@ -249,7 +267,7 @@ class SqliteConnector:
         #     self.__check_windows_dir(new_full_path), folder_no, uid_no)
         new_full_path = self.__check_windows_dir(new_full_path)
         sql = "update mail_message set full_path = ? where folder_no = %d and uid_no = %d" % (
-             folder_no, uid_no)
+            folder_no, uid_no)
         self.__query_execute_bytes(cur, sql, new_full_path, coding)
         cur.close()
         return True
@@ -258,21 +276,24 @@ class SqliteConnector:
         cur = self.conn.cursor()
         messages: List[MailMessage] = []
         self.__query_execute(cur,
-            "select folder_no, uid_no, full_path, msg_size, msg_receive from mail_message" + self.__make_where(days))
+                             "select folder_no, uid_no, full_path, msg_size, msg_receive from mail_message" + self.__make_where(
+                                 days))
 
         try:
             messages = []
             for row in cur:
                 b64_bytes_full_path: str = "utf-8"
-                bytes_full_path:bytes = row[2]
+                bytes_full_path: bytes = row[2]
                 is_charset_ok, full_path, coding = try_bytes_decoding(bytes_full_path)
-                folder_no:int = row[0]
-                uid_no:int = row[1]
-                if is_charset_ok is False or coding != "utf-8": # 파일 이름 인코딩이 UTF-8 이 아닐 경우, 디버깅을 위해 b64로 값을 찍어둔다.
+                folder_no: int = row[0]
+                uid_no: int = row[1]
+                if is_charset_ok is False or coding != "utf-8":  # 파일 이름 인코딩이 UTF-8 이 아닐 경우, 디버깅을 위해 b64로 값을 찍어둔다.
                     b64_bytes_full_path = base64.b64encode(bytes_full_path).decode("utf-8")
                 if is_charset_ok is False:
-                    self.logger.info("Fail to decode full_path=%s, bytes_full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
-                                 % (b64_bytes_full_path, bytes_full_path, self.db_path, self.company_name, self.company_id, self.user_id, folder_no, uid_no))
+                    self.logger.info(
+                        "Fail to decode full_path=%s, bytes_full_path=%s, db_path=%s, company_name=%s, company_id=%d, user_id=%d, folder_no=%d, uid_no=%d"
+                        % (b64_bytes_full_path, bytes_full_path, self.db_path, self.company_name, self.company_id,
+                           self.user_id, folder_no, uid_no))
                     continue
                 messages.append(MailMessage(
                     folder_no=folder_no,
