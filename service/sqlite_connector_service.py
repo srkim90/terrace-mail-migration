@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import os
 import sqlite3
 import time
@@ -188,6 +189,13 @@ class SqliteConnector:
                                                                                            uid_no=uid_no))
         return full_path
 
+    @staticmethod
+    def calculate_checksum(file_path: str) -> str:
+        with open(file_path, 'rb') as f:
+            content = f.read()
+        checksum = hashlib.md5(content).hexdigest()  # 또는 sha1, sha256 등 다른 해시 알고리즘 사용 가능
+        return checksum
+
     def __validate_eml_path(self, new_full_path, old_full_path, folder_no: int, uid_no: int):
         if new_full_path == old_full_path:
             self.logger.error(
@@ -216,17 +224,21 @@ class SqliteConnector:
             old_ctime, old_ino, old_size, old_blocks, old_blksize = self.__check_eml_data(new_full_path)
             new_ctime, new_ino, new_size, new_blocks, new_blksize = self.__check_eml_data(old_full_path)
             if old_size != new_size or old_size == 0:
+                new_checksum = self.calculate_checksum(new_full_path)
+                old_checksum = self.calculate_checksum(old_full_path)
+                if new_checksum == old_checksum:
+                    break
                 if idx+1 >= max_retry:
                     self.logger.error(
                         "Error. not compare mail size old and now : %s, max_retry=%d, "
-                        "old_full_path=%s, old_ctime=%s, old_ino=%s, old_size=%s, old_blocks=%s, old_blksize=%s, "
-                        "new_full_path=%s, new_ctime=%s, new_ino=%s, new_size=%s, new_blocks=%s, new_blksize=%s" % (
+                        "old_full_path=%s, old_ctime=%s, old_ino=%s, old_size=%s, old_blocks=%s, old_blksize=%s, old_checksum=%s, "
+                        "new_full_path=%s, new_ctime=%s, new_ino=%s, new_size=%s, new_blocks=%s, new_blksize=%s, new_checksum=%s" % (
                             self.__make_log_identify(folder_no=folder_no,
                                                      uid_no=uid_no,
                                                      message=new_full_path),
                             max_retry,
-                            old_full_path, old_ctime, old_ino, old_size, old_blocks, old_blksize,
-                            new_full_path, new_ctime, new_ino, new_size, new_blocks, new_blksize, ))
+                            old_full_path, old_ctime, old_ino, old_size, old_blocks, old_blksize, old_checksum,
+                            new_full_path, new_ctime, new_ino, new_size, new_blocks, new_blksize, new_checksum))
                     return False
                 else:
                     time.sleep(0.1)
