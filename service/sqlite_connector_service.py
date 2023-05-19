@@ -317,6 +317,7 @@ class SqliteConnector:
                     msg_receive=row[4],
                     st_ctime=0.0,
                     st_ino=0,
+                    uniq_ino="",
                     st_size=0,
                     hardlink_count=0,
                     is_webfolder=self.is_webfolder,
