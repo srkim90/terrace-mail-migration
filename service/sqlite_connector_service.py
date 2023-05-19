@@ -221,8 +221,8 @@ class SqliteConnector:
 
         max_retry = 3
         for idx in range(max_retry):
-            old_ctime, old_ino, old_size, old_blocks, old_blksize = self.__check_eml_data(new_full_path)
-            new_ctime, new_ino, new_size, new_blocks, new_blksize = self.__check_eml_data(old_full_path)
+            old_ctime, old_ino, old_size, old_blocks, old_blksize = self.__check_eml_data(old_full_path)
+            new_ctime, new_ino, new_size, new_blocks, new_blksize = self.__check_eml_data(new_full_path)
             if old_size != new_size or old_size == 0:
                 new_checksum = self.calculate_checksum(new_full_path)
                 old_checksum = self.calculate_checksum(old_full_path)

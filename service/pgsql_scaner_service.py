@@ -292,11 +292,19 @@ class PostgresqlSqlScanner:
 
         return company
 
+    def __make_str_inode(self, mail: MailMessage) -> str:
+        inode = mail.st_ino
+        path_a = mail.full_path.split("/")[1]
+        path_b = mail.full_path.split("/")[2]
+        str_inode = "/%s/%s:%d" % (path_a, path_b, inode)  # /data/mdata4
+        mail.uniq_ino = str_inode
+        return str_inode
+
     # inode 정보를 업데이트 해서 하드 링크여부를 파악한다. (company 당 한번 동작)
     def __add_mail_inode_info(self, company: Company) -> Company:
         if self.setting_provider.move_setting.enable_hardlink is False:
             return company
-        node_dict: Dict[int, List[MailMessage]] = {}
+        node_dict: Dict[str, List[MailMessage]] = {}
         for user_path in company.users:
             try:
                 user = self.load_user_json_data(user_path, self.logger)
@@ -307,11 +315,11 @@ class PostgresqlSqlScanner:
                 continue
             # step.1 : 모든 사용자를 대상으로 inode 별 dict을 만든다.
             for mail in user.messages:
-                inode = mail.st_ino
+                str_inode = self.__make_str_inode(mail)
                 try:
-                    node_dict[inode].append(mail)
+                    node_dict[str_inode].append(mail)
                 except KeyError:
-                    node_dict[inode] = [mail]
+                    node_dict[str_inode] = [mail]
         for user_path in company.users:
             if type(user_path) == str:
                 user = self.load_user_json_data(user_path, self.logger)
@@ -320,12 +328,12 @@ class PostgresqlSqlScanner:
             if user is None:
                 continue
             for mail in user.messages:
-                inode = mail.st_ino
+                str_inode = self.__make_str_inode(mail)
                 try:
-                    k_checker = node_dict[inode]
+                    k_checker = node_dict[str_inode]
                 except KeyError:
                     continue
-                for other_mail in node_dict[inode]: # 각 개별메일에서 하드링크 카운트 및 목록을 업데이트 해준다.
+                for other_mail in node_dict[str_inode]:  # 각 개별메일에서 하드링크 카운트 및 목록을 업데이트 해준다.
                     if other_mail.full_path not in mail.hardlinks:
                         mail.hardlinks.append(other_mail.full_path)
                 mail.hardlink_count = len(mail.hardlinks)

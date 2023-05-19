@@ -16,6 +16,7 @@ class MailMessage:
     msg_receive: int
     st_ctime: float
     st_ino: int
+    uniq_ino: str
     st_size: int
     hardlink_count: int
     is_webfolder: bool

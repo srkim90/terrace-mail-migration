@@ -269,23 +269,24 @@ class MailMigrationService:
         return os.path.join(index1, index2, index3, yyyymmdd)
 
     def __copy_mail_file(self, mail: MailMessage) -> Union[
-        Tuple[MailMigrationResultType, str], Tuple[MailMigrationResultType, None]]:
+        Tuple[MailMigrationResultType, str, bool], Tuple[MailMigrationResultType, None, bool]]:
         org_full_path = mail.full_path
+        is_hard_link = False
         new_mdata_path = self.__select_move_target_dir()
         if self.__check_origin_mdata_path(org_full_path) is False:
             self.logger.debug("application.yml 파일에 지정 된 원본 파일 위치와 입력된 파일의 위치가 다릅니다. (SKIP) : org_full_path=%s, %s" %
                               (org_full_path, self.__make_log_identify()))
-            return MailMigrationResultType.ORIGINAL_DIR_NOT_IN_APPLICATION_YML, None
+            return MailMigrationResultType.ORIGINAL_DIR_NOT_IN_APPLICATION_YML, None, is_hard_link
         elif os.path.exists(org_full_path) is False:
             self.logger.debug("이관할 파일이 존재하지 않습니다. : org_full_path=%s, %s" %
                               (org_full_path, self.__make_log_identify()))
             stat: MailMigrationResultType = MailMigrationResultType.ALREADY_REMOVED if \
                 self.__check_already_moved(org_full_path) else MailMigrationResultType.NOT_EXIST_MAIL_FILE_TO_MOVE
-            return stat, None
+            return stat, None, is_hard_link
         elif new_mdata_path is None:
             self.logger.error("이동 대상 디렉토리가 존재하지 않거나, 유효하지 않습니다. : new_mdata_path=%s, %s" %
                               (self.move_setting.new_mdata_path, self.__make_log_identify()))
-            return MailMigrationResultType.NOT_EXIST_MOVE_TARGET_DIR, None
+            return MailMigrationResultType.NOT_EXIST_MOVE_TARGET_DIR, None, is_hard_link
         file_name = org_full_path.split(self.dir_separator)[-1]
         select_move_target_dir = self.__select_move_target_dir()
         m_data_subdir = self.__m_data_subdir_parser(org_full_path)
@@ -303,17 +304,18 @@ class MailMigrationService:
         if os.path.exists(full_new_file) is True:
             self.logger.minor("메일 이동 대상 경로에 이미 다른 파일이 존재 합니다. : full_new_file=%s, %s" %
                               (full_new_file, self.__make_log_identify()))
-            return MailMigrationResultType.ALREADY_MOVED_AND_REMAIN_OLD_MAIL_FILES, None
+            return MailMigrationResultType.ALREADY_MOVED_AND_REMAIN_OLD_MAIL_FILES, None, is_hard_link
         # self.convert_mail_dir_volume_to_same_first_hardlink_test(full_new_file, full_new_file)
         if len(mail.hardlinks) <= 1:  # 하드링크 걸린 메일이 아니다.
             shutil.copy2(org_full_path, full_new_file)
         else:  # 하드링크가 존재하는 메일이다.
             tmp_new_file = self.__handle_hardlink(mail, full_new_file)
             if tmp_new_file is not None:
+                is_hard_link = True
                 full_new_file = tmp_new_file
         self.migration_logging.inc_mail_copy()
         self.migration_logging.inc_disk_write(os.stat(full_new_file).st_size)
-        return MailMigrationResultType.SUCCESS, full_new_file
+        return MailMigrationResultType.SUCCESS, full_new_file, is_hard_link
 
     def __get_move_target_volume_path(self, mail_path: str) -> Union[str, None]:
         for path in self.move_setting.new_mdata_path:
@@ -405,7 +407,7 @@ class MailMigrationService:
             self.migration_logging.inc_migration_fail_already_removed()
             return False, None, None, MailMigrationResultType.ALREADY_REMOVED
         org_full_path = mail.full_path
-        stat, new_full_path = self.__copy_mail_file(mail)
+        stat, new_full_path, is_hard_link = self.__copy_mail_file(mail)
         if new_full_path is None:
             self.migration_logging.inc_migration_fail_invalid_new_directory()
             self.logger.minor("Fail to create new mail file: %s" % self.__make_log_identify(user))
