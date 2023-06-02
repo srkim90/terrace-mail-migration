@@ -321,6 +321,8 @@ class MailMigrationService:
         for path in self.move_setting.new_mdata_path:
             if len(mail_path) <= len(path):
                 continue
+            if path[-1] != self.dir_separator:
+                path += self.dir_separator
             org_path = mail_path[0:len(path)]
             if path == org_path:
                 return org_path
