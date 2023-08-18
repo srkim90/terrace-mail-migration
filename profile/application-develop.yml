@@ -6,7 +6,7 @@ system:
 report:
   report-path: D:\data\report
   migration-result: D:\data\migration-result
-  local-test-data-path: D:\data\mindex # windows 일 경우에만 동작한다.
+  local-test-data-path: D:\data\mindex
 logging:
   log-path: D:\data\log
   file-log-level: INFO # DEBUG, MINOR, INFO, ERROR
@@ -34,11 +34,11 @@ mail:
     #new-mdata-path: D:\data\mindex\opt\TerraceTims\mdata
 database:
   postgresql:
-    host: 172.22.1.103
+    host: 127.0.0.1
     port: 5432
     username: mailadm
     password: pgadmin80!@
-    database: do
+    database: tims
 date-range:
   #start-day: 2022-03-01 # 이관 시작일 : ex> 2022.01.01, null 일 경우, 종료일 이전 모든 시간에 대해서 작업 ()
   #end-day: 2022-09-01   # 이관 종료일 : ex> 2022.08.32, null 일 경우, 현재시간

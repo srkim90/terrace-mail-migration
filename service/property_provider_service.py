@@ -3,7 +3,10 @@ import os
 import re
 from typing import List, Union, Tuple
 
-from pydantic import BaseSettings
+try:
+    from pydantic import BaseSettings
+except Exception:
+    from pydantic_settings import BaseSettings
 from dependency_injector import containers, providers
 
 from enums.move_strategy_type import MoveStrategyType, move_strategy_type_converter

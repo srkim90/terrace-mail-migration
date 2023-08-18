@@ -155,6 +155,15 @@ class PostgresqlSqlScanner:
             raise NotImplementedError
         return rows
 
+    def find_user_by_mcache_path(self, mcache_path: str) -> Tuple[int, int, str]:
+        query = "select mail_user_seq, mail_domain_seq, mail_uid from mail_user where message_store = '%s'" % (mcache_path, )
+        for idx, row in enumerate(self.__execute_query(query)):
+            mail_user_seq = row[0]
+            mail_domain_seq = row[1]
+            mail_uid = row[2]
+            return mail_user_seq, mail_domain_seq, mail_uid
+        return -1, -1, ""
+
     def find_users(self, company: Company):
         query = "select id, mail_user_seq, created_at, updated_at, login_id, mail_group, name from go_users where company_id = %d" % (
             company.id)
