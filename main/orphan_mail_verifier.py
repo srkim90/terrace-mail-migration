@@ -1,7 +1,9 @@
 import gzip
 import os
 import sqlite3
+import sys
 
+sys.path.append("/opt/terrace-mail-migration")
 from main.cmd.command_line_parser import read_scan_options
 from main.cmd.scan_command_option_models import ScanCommandOptions
 from service.logging_service import LoggingService
@@ -58,7 +60,6 @@ class OrphanMailVerifier:
         option: ScanCommandOptions = read_scan_options()
         self.pgsql = PostgresqlSqlScanner(option)
 
-
     def check_report_file_aready_exist(self, depth_1: str):
         f_name = make_mail_list_file_name(depth_1)
         return os.path.exists(f_name)
@@ -72,7 +73,8 @@ class OrphanMailVerifier:
             if os.listdir(path_depth_1) is False:
                 continue
             if self.check_report_file_aready_exist(depth_1) is True:
-                self.logger.info("[%d/%d] SKIP : %s is already exist" % (idx+1, len(depth_1_list), make_mail_list_file_name(depth_1), ))
+                self.logger.info("[%d/%d] SKIP : %s is already exist" % (
+                    idx + 1, len(depth_1_list), make_mail_list_file_name(depth_1),))
                 continue
             mails_db = SqliteDBMails(base_path=path_depth_1, absolute_mail_name_dict={}, mail_name_dict={},
                                      db_name_dict={})
@@ -90,7 +92,7 @@ class OrphanMailVerifier:
                     yield mails_db, full_path
             save_sqlite_db_mail_list(depth_1, mails_db)
             self.logger.info(
-                "[%d/%d] OK : %s report created" % (idx+1, len(depth_1_list), make_mail_list_file_name(depth_1),))
+                "[%d/%d] OK : %s report created" % (idx + 1, len(depth_1_list), make_mail_list_file_name(depth_1),))
 
     def __get_mail_all(self, conn, only_name: bool = False) -> List[str]:
         mail_list: List[str] = []
