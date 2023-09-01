@@ -4,6 +4,7 @@ import sqlite3
 import sys
 
 sys.path.append("/opt/terrace-mail-migration")
+sys.path.append("/opt/terrace-mail-migration/binary/Python-minimum/site-packages")
 from main.cmd.command_line_parser import read_scan_options
 from main.cmd.scan_command_option_models import ScanCommandOptions
 from service.logging_service import LoggingService
