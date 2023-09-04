@@ -71,6 +71,8 @@ class OrphanMailVerifier:
         depth_1_list = os.listdir(mindex_path)
         for idx, depth_1 in enumerate(depth_1_list):
             path_depth_1 = os.path.join(mindex_path, depth_1)
+            if os.path.isdir(path_depth_1) is False:
+                continue
             if os.listdir(path_depth_1) is False:
                 continue
             if self.check_report_file_aready_exist(depth_1) is True:
@@ -81,11 +83,11 @@ class OrphanMailVerifier:
                                      db_name_dict={})
             for depth_2 in os.listdir(path_depth_1):
                 path_depth_2 = os.path.join(path_depth_1, depth_2)
-                if os.listdir(path_depth_2) is False:
+                if os.path.isdir(path_depth_2) is False:
                     continue
                 for depth_3 in os.listdir(path_depth_2):
                     path_depth_3 = os.path.join(path_depth_2, depth_3)
-                    if os.listdir(path_depth_3) is False:
+                    if os.path.isdir(path_depth_3) is False:
                         continue
                     full_path = os.path.join(path_depth_3, "_mcache.db")
                     if os.path.exists(full_path) is False:
