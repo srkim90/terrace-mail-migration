@@ -34,14 +34,18 @@ class SqliteDBMails:
     db_name_dict: Dict[str, DbNameInfo]  ## _mcache.db -> mail_user_seq, mail_domain_seq, mail_uid
 
 
-def make_mail_list_file_name(depth_1: str):
+def make_mail_list_file_path() -> str:
     property = get_property()
     result_path: str = property["report"]["report-path"]
     last_path = result_path.replace("\\", "/").split("/")[-1]
     result_path = result_path.replace(last_path, "sqlite-mail-list")
     if os.path.exists(result_path) is False:
         os.makedirs(result_path)
-    return os.path.join(result_path, "%s.json.gz" % depth_1)
+    return result_path
+
+
+def make_mail_list_file_name(depth_1: str):
+    return os.path.join(make_mail_list_file_path(), "%s.json.gz" % depth_1)
 
 
 def save_sqlite_db_mail_list(depth_1: str, mails: SqliteDBMails):

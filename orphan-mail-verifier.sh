@@ -40,6 +40,7 @@ check_env() {
 
 execute_python() {
     $PYTHON ${BASE_DIR}/main/orphan_mail_verifier.py $@
+    $PYTHON ${BASE_DIR}/main/orphan_mail_verifier_2.py $@
 }
 
 init() {
